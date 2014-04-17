@@ -1,0 +1,5 @@
+1. theoretical average eviction cycles of a cache line ( level 1, 2 and 3).
+2. empirical average eviction cycles of a cache line ( level 1, 2 and 3).
+3. average lifetime of objects.
+4. % of cache line remaining when an object is detected to be dead ( level 1, 2 and 3)
+

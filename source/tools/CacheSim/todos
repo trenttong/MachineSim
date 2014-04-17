@@ -1,0 +1,11 @@
+XX 1. re-enforce inclusivity in cache and tlb 
+2. refactor code. 
+XX 3. macros get page, get block, etc
+XX 4. access hierchy l1 -> ul2access -> ul3access
+XX 5. verifyication.
+XX 6. simlog move to other files.
+7. reorganize all files.
+8. simopts refactor ?
+9. need to clean up the simXXX
+10. predictors need testing.
+

@@ -1,0 +1,26 @@
+How to use BranchPred ?
+------------------------------------------
+See pin -t branch_predictor -help -- pwd
+
+Currently, BranchPred contains the following branch predictors.
+bimodal.
+gshare.
+simple indirect.
+target cache indirect.
+
+How to add new predictors ?
+------------------------------------------
+Add new predictor class, make it a subclass 
+of the BRANCHPREDICTOR class.
+
+Define the following functions.
+
+static VOID Instruction(INS ins, VOID *v);
+static VOID [Cond|Indir]Branch(BIMODAL *bm, ADDRINT ip, BOOL taken, THREADID tid);
+inline INT8 *HistAddress(ADDRINT ip, THREADID tid);
+
+
+Have Fun.
+
+ 
+

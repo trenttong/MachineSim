@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+<component id="root" name="root">
+	<component id="system" name="system">
+			<component id="system.LM_itlb" name="LM_itlb">
+				<param name="cache_enable" value="1"/>
+				<param name="number_entries" value="4"/>
+				<param name="cache_linesize" value="4096"/>
+				<param name="associativity" value="4"/>
+			</component>
+   		        <component id="system.LM_dtlb" name="LM_dtlb">
+				<param name="cache_enable" value="1"/>
+				<param name="number_entries" value="4"/>
+				<param name="cache_linesize" value="4096"/>
+				<param name="associativity" value="4"/>
+			</component>
+   		        <component id="system.L1_itlb" name="L1_itlb">
+				<param name="cache_enable" value="1"/>
+				<param name="number_entries" value="64"/>
+				<param name="cache_linesize" value="4096"/>
+				<param name="associativity" value="4"/>
+			</component>
+   		        <component id="system.L1_dtlb" name="L1_dtlb">
+				<param name="cache_enable" value="1"/>
+				<param name="number_entries" value="64"/>
+				<param name="cache_linesize" value="4096"/>
+				<param name="associativity" value="4"/>
+			</component>
+   		        <component id="system.L2_utlb" name="L2_utlb">
+				<param name="cache_enable" value="1"/>
+				<param name="number_entries" value="512"/>
+				<param name="cache_linesize" value="4096"/>
+				<param name="associativity" value="4"/>
+			</component>
+   		        <component id="system.L1_icache" name="L1_icache">
+				<param name="cache_enable" value="1"/>
+				<param name="number_entries" value="512"/>
+				<param name="cache_linesize" value="64"/>
+				<param name="associativity" value="4"/>
+			</component>
+
+   		        <component id="system.L1_dcache" name="L1_dcache">
+				<param name="cache_enable" value="1"/>
+				<param name="number_entries" value="512"/>
+				<param name="cache_linesize" value="64"/>
+				<param name="associativity" value="4"/>
+			</component>
+   		        <component id="system.L2_ucache" name="L2_ucache">
+				<param name="cache_enable" value="1"/>
+				<param name="number_entries" value="4096"/>
+				<param name="cache_linesize" value="64"/>
+				<param name="associativity" value="4"/>
+			</component>
+   		        <component id="system.L3_ucache" name="L3_ucache">
+				<param name="cache_enable" value="1"/>
+				<param name="number_entries" value="8192"/>
+				<param name="cache_linesize" value="64"/>
+				<param name="associativity" value="4"/>
+			</component>
+	</component>
+</component>
+

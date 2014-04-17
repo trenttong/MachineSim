@@ -1,0 +1,59 @@
+It is clear that objects have a much shorter life time than the LLC cache that hold them.
+
+It is fair to assume that the lifetime of the object is 1M cycles while the cache eviction cycles in LLC is 10M cycles.
+
+
+
+
+Early Death Detection
+
+- Mechanism to be built to detect death of an object.
+	- special instructions.
+	- notify the cache to evict.
+		- problem with this is that the death of the object are too infrequent in 
+		  comparison to eviction.
+
+		  i.e. there are 1M evictions happened in the level 1 cache. but many of
+		  which are NOT evicted by dead object. assuming the death object hinted
+		  eviction is always correct. the fact that it only consistitues a small
+		  portion of the evictions make it less effective. 
+		  e.g. eviction happens 40 instructions on level 1 cache. but average life
+		  time of objects are 2000 or more instructions.
+		  
+	          measurements taken on specjbb indicate that dead object hinted eviction
+		  always outperforms unhinted eviction. but only MARGINALLY ...
+
+		  this is better for level 2 and level 3 cache, as they tend to have a
+		  longer eviction cycle. however, not by too much. i.e. level 3 cache
+		  has a 1.5MPKI == 660 cycles per evictions.
+
+		  However, there is another factor to taken into account here. i.e. the
+		  eviction guided by LRU is already good. Therefore, to get any improvement
+                  the dead object guided eviction has to be better than a already state-of-art
+		  replacement policy.
+
+	- hardware changes may be hard.
+	- another thing found was large number of short lived object only exists in certain (3/~12) benchmarks.
+
+	Conclusion: dead object guided eviction does not deliver significant improvement over LRU. Therefore, it is
+	not a direction to pursue.
+		  
+
+
+Early Death Prediction
+
+- Nursery has a low suvival rate.
+- make caching for nursery easier to evict.
+
+   	- the garbage collector tells the address of the nursery heap.
+   	- put a bit in cache to tell whether it is cache an object from the nursery.
+   	- replacement the cache line more actively.
+
+   	- the garbage collector estimate the lifetime of the objects.
+   	- the garbage collector hints the cache what the average survival rate of objects on the nursery and the cache 
+     	  adjust replacement accordingly. 
+
+	- same problem here. how much can this outperform LRU ... 
+
+
+

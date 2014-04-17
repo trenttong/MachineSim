@@ -1,0 +1,175 @@
+#========================================
+# General stats
+#========================================
+# :
+# 621930276 instructions executed
+# 
+# L1 Inst Cache
+# Cache Total Size :        32768
+# Cache Line Size :           64
+# Cache Associativity :      4
+# L1 Data Cache
+# Cache Total Size :        32768
+# Cache Line Size :           64
+# Cache Associativity :      4
+# L2 Unified Cache
+# Cache Total Size :       262144
+# Cache Line Size :           64
+# Cache Associativity :      4
+# L3 Unified Cache
+# Cache Total Size :      8388608
+# Cache Line Size :           64
+# Cache Associativity :     16
+
+
+#========================================
+# Cache Replacement stats
+#========================================
+################
+# L1 unified CACHE replacement length
+################
+# :
+# Theoretical Deadth-to-Eviction cycles: 40298
+# GlobalL1DCacheReplacementLength:13216227244535 GlobalL1DCacheReplacementCount:30672654
+# 430879 Instructions Per Replacement
+# GlobalL1DForceEvictCount:146824
+
+################
+# L2 unified CACHE replacement length
+################
+# :
+# Theoretical Deadth-to-Eviction cycles: 77958
+# GlobalL2CacheReplacementLength:50705763205572 GlobalL2CacheReplacementCount:8965454
+# 5655682 Instructions Per Replacement
+# GlobalL2ForceEvictCount:145709
+
+################
+# L3 unified CACHE replacement length
+################
+# :
+# Theoretical Deadth-to-Eviction cycles: 1816468
+# GlobalL3CacheReplacementLength:130987880192900 GlobalL3CacheReplacementCount:1794231
+# 73005025 Instructions Per Replacement
+# GlobalL3ForceEvictCount:146762
+
+#========================================
+# VM stats
+#========================================
+################
+# Virtual Machine Object Lifetime length
+################
+# :
+# GlobalObjectAllocationCount:338611 GlobalObjectDeadCount:146854 death rate:0.433695 AverageSize:25
+# GlobalObjectDeadCount:146854 GlobalObjectLifetimeLength:241977754
+# GlobalObjectDeadInLvl1Count:0 0%
+# GlobalObjectDeadInLvl2Count:0 0%
+# GlobalObjectDeadInLvl3Count:0 0%
+# DeadAccessCount:0
+# 1647 Instructions Per Object
+
+#========================================
+# Cache Hit/Miss stats
+#========================================
+################
+# L1 DCACHE stats
+################
+# :
+# Load-Hits:            191897188   96.86%
+# Load-Misses:            6211043    3.14%
+# Load-Accesses:        198108231  100.00%
+# 
+# Store-Hits:            83268096   95.58%
+# Store-Misses:           3853864    4.42%
+# Store-Accesses:        87121960  100.00%
+# 
+# Total-Hits:           275165284   96.47%
+# Total-Misses:          10064907    3.53%
+# Total-Accesses:       285230191  100.00%
+# Total MPKI:           16.18
+
+################
+# L1 ForceEvict DCACHE stats
+################
+# :
+# Load-Hits:            191897947   96.87%
+# Load-Misses:            6210284    3.13%
+# Load-Accesses:        198108231  100.00%
+# 
+# Store-Hits:            83267861   95.58%
+# Store-Misses:           3854099    4.42%
+# Store-Accesses:        87121960  100.00%
+# 
+# Total-Hits:           275165808   96.47%
+# Total-Misses:          10064383    3.53%
+# Total-Accesses:       285230191  100.00%
+# Total MPKI:           16.18
+
+################
+# L2 unified CACHE stats
+################
+# :
+# Load-Hits:             19312308   83.89%
+# Load-Misses:            3709505   16.11%
+# Load-Accesses:         23021813  100.00%
+# 
+# Store-Hits:             6932848   89.94%
+# Store-Misses:            775115   10.06%
+# Store-Accesses:         7707963  100.00%
+# 
+# Total-Hits:            26245156   85.41%
+# Total-Misses:           4484620   14.59%
+# Total-Accesses:        30729776  100.00%
+# Total MPKI:            7.21
+
+################
+# L2 ForceEvict unified CACHE stats
+################
+# :
+# Load-Hits:             19313209   83.89%
+# Load-Misses:            3708604   16.11%
+# Load-Accesses:         23021813  100.00%
+# 
+# Store-Hits:             6933042   89.95%
+# Store-Misses:            774921   10.05%
+# Store-Accesses:         7707963  100.00%
+# 
+# Total-Hits:            26246251   85.41%
+# Total-Misses:           4483525   14.59%
+# Total-Accesses:        30729776  100.00%
+# Total MPKI:            7.21
+
+################
+# L3 unified CACHE stats
+################
+# There are a total eviction of 146854 for LvL 3 cache. 
+# :
+# Load-Hits:              3303591   89.06%
+# Load-Misses:             405914   10.94%
+# Load-Accesses:          3709505  100.00%
+# 
+# Store-Hits:              282144   36.40%
+# Store-Misses:            492971   63.60%
+# Store-Accesses:          775115  100.00%
+# 
+# Total-Hits:             3585735   79.96%
+# Total-Misses:            898885   20.04%
+# Total-Accesses:         4484620  100.00%
+# Total MPKI:            1.45
+
+################
+# L3 ForceEvict unified CACHE stats
+################
+# :
+# Load-Hits:              3308832   89.22%
+# Load-Misses:             399772   10.78%
+# Load-Accesses:          3708604  100.00%
+# 
+# Store-Hits:              281115   36.28%
+# Store-Misses:            493806   63.72%
+# Store-Accesses:          774921  100.00%
+# 
+# Total-Hits:             3589947   80.07%
+# Total-Misses:            893578   19.93%
+# Total-Accesses:         4483525  100.00%
+# Total MPKI:            1.44
+

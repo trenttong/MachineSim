@@ -1,0 +1,9 @@
+1. hypothesis
+  - most of the allocations belong to a few profilic types.
+  - profilic type objects tend to be short lived.
+
+2. postulate 
+  - type of an object is an indication of the lifetime of the objects.
+    - some types are more likely to make shortlived objects.
+      - profilic types.
+
