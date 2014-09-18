@@ -591,6 +591,15 @@ public:
 /// @ SimInsCount - keep instruction counts.
 class SimInsCount 
 {
+public:
+   typedef enum 
+   {
+      INS_LOAD=0,
+      INS_STORE,
+      INS_BRANCH,
+      INS_CALL,
+      INS_RET
+   } INSTYPE;
 private:
    UINT64 load;
    UINT64 store;
@@ -604,6 +613,7 @@ public:
    VOID IncBranch(void) { ++ branch; }
    VOID IncCall(void)   { ++ call;   }
    VOID IncRet(void)    { ++ ret;    }
+   std::string StatsLongAll(); 
 };
 
 

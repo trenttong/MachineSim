@@ -583,7 +583,7 @@ LOCALFUN VOID cache_and_tlb_module_print()
     out << "# elided mfence " << elided_mfence << " executed_mfence " << executed_mfence << endl;
 
     /* done */
-    fprintf(stdout, "simulation stats dumped into %s.%d", "cache_sim.out", PIN_GetPid());
+    fprintf(stdout, "simulation stats dumped into %s.%d\n", "cache_sim.out", PIN_GetPid());
     return;
 }
 

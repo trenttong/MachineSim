@@ -121,3 +121,18 @@ bool AddrSpaceMapParser::GetNextRegion(UINT64 &start, UINT64 &end, UINT64 &perm)
     return true;
 }
 
+std::string SimInsCount::StatsLongAll()
+{
+    std::string out;
+    out += "Load	" + mydecstr(load, 8);
+    out += "\n";
+    out += "Store	" + mydecstr(store, 8);
+    out += "\n";
+    out += "Branch	" + mydecstr(branch, 8);
+    out += "\n";
+    out += "Call	" + mydecstr(call, 8);
+    out += "\n";
+    out += "Return	" + mydecstr(ret, 8);
+    return out;
+}
+
