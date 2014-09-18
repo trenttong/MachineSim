@@ -49,6 +49,7 @@ VOID DataWriteRef(ADDRINT iaddr, ADDRINT addr, UINT32 size, UINT64 base, UINT64 
 /* Globals variables */
 /* ===================================================================== */
 static FILE * tracefile = NULL;
+static SimInsCount *InsCount = NULL;
 
 /* ===================================================================== */
 /* Parse static mapping every X billion instructions  this constructs    */
@@ -102,10 +103,10 @@ LOCALFUN VOID DoSimpleICount(ADDRINT ip, THREADID id)
 
       if (simopts->get_static_addrspace_map()) ParseStaticAddrSpaceMap();
     }
-
-    return;
 }
+
     
+/// @ SimpleInstructionCount - count the # of instructions executed.
 VOID SimpleInstructionCount(INS ins, VOID *v)
 {
     /// =========================================================
@@ -116,6 +117,67 @@ VOID SimpleInstructionCount(INS ins, VOID *v)
                    IARG_INST_PTR, 
                    IARG_THREAD_ID, 
                    IARG_END);
+}
+
+
+LOCALFUN VOID DoICountOnType(THREADID id, int type)
+{
+    InsCount->IncLoad();
+    InsCount->IncStore();
+    InsCount->IncBranch();
+    InsCount->IncCall();
+    InsCount->IncRet();
+}
+
+/// @ InstructionCountOnType - count instruction based on type.
+VOID InstructionCountOnType(INS ins, VOID *v)
+{
+    /// --------------------------------------------- ///
+    //  Read or write memory location                  //
+    /// --------------------------------------------- ///
+    if (INS_IsMemoryRead(ins))
+    {
+       INS_InsertCall(ins, IPOINT_BEFORE, 
+                     (AFUNPTR)DoICountOnType, 
+                     IARG_THREAD_ID, 
+                     IARG_END);
+    }
+
+    if (INS_IsMemoryWrite(ins))
+    {
+       INS_InsertCall(ins, IPOINT_BEFORE, 
+                     (AFUNPTR)DoICountOnType, 
+                     IARG_THREAD_ID, 
+                     IARG_END);
+    }
+
+
+    /// --------------------------------------------- ///
+    //  Branch Instruction                             //
+    /// --------------------------------------------- ///
+    if (INS_IsBranch(ins))
+    {
+       INS_InsertCall(ins, IPOINT_BEFORE, 
+                     (AFUNPTR)DoICountOnType, 
+                     IARG_THREAD_ID, 
+                     IARG_END);
+    }
+
+    if (INS_IsCall(ins))
+    {
+       INS_InsertCall(ins, IPOINT_BEFORE, 
+                     (AFUNPTR)DoICountOnType, 
+                     IARG_THREAD_ID, 
+                     IARG_END);
+    }
+
+    if (INS_IsRet(ins))
+    {
+       INS_InsertCall(ins, IPOINT_BEFORE, 
+                     (AFUNPTR)DoICountOnType, 
+                     IARG_THREAD_ID, 
+                     IARG_END);
+    }
 }
 
 VOID CacheSim(INS ins,VOID *v)
@@ -312,3 +374,12 @@ VOID InstructionInstrument(INS ins, VOID *v)
     if (simopts->get_tracerecord()) TraceSim(ins, v);
 }
 
+void instruction_module_init(void)
+{
+    InsCount = new SimInsCount();
+}
+
+void instruction_module_fini(void)
+{
+    if (InsCount) delete InsCount;
+}

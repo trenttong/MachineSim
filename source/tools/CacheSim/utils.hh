@@ -47,6 +47,8 @@ string mydecstr(UINT64 v, UINT32 w);
 /* ===================================================================== */
 VOID main_module_init();
 VOID main_module_fini();
+VOID instruction_module_init();
+VOID instruction_module_fini();
 VOID cache_and_tlb_module_init();
 VOID cache_and_tlb_module_fini();
 
@@ -57,6 +59,7 @@ VOID ImageInstrument(IMG img, VOID *v);
 VOID RoutineInstrument(RTN rtn, VOID *);
 VOID InstructionInstrument(INS ins, VOID *v);
 VOID SimpleInstructionCount(INS ins, VOID *v);
+VOID InstructionCountOnType(INS ins, VOID *v);
 
 /// @ forward class declaration.
 class SIMLOWLEVEL;
@@ -507,6 +510,7 @@ private:
     BOOL SIM_EnableDynAddrSpaceMap;
     BOOL SIM_EnableStaticAddrSpaceMap;
     BOOL SIM_EnableTLBCoherence;
+    BOOL SIM_EnableInsCount;
     UINT32 SIM_WaitWorkerCount;
     UINT64 SIM_MaxSimInstCount;
 
@@ -524,6 +528,7 @@ private:
         SIM_EnableDynAddrSpaceMap = false;
         SIM_EnableStaticAddrSpaceMap = false;
         SIM_EnableTLBCoherence = false;
+        SIM_EnableInsCount = false;
         SIM_WaitWorkerCount = 0;
         SIM_MaxSimInstCount = ULLONG_MAX;
     }
@@ -568,6 +573,8 @@ public:
     inline VOID set_ptwalk_trace(BOOL val)      { SIM_EnablePTWalkTrace = val;  }
     inline BOOL get_tlb_coherence(void) const   { return SIM_EnableTLBCoherence;}
     inline VOID set_tlb_coherence(BOOL val)     { SIM_EnableTLBCoherence = val; }
+    inline BOOL get_ins_count(void) const       { return SIM_EnableInsCount;    }
+    inline VOID set_ins_count(BOOL val)         { SIM_EnableInsCount = val;     }
     inline BOOL get_dynamic_addrspace_map(void) const { return SIM_EnableDynAddrSpaceMap;     }
     inline VOID set_dynamic_addrspace_map(BOOL val)   { SIM_EnableDynAddrSpaceMap = val;      }
     inline BOOL get_static_addrspace_map(void) const  { return SIM_EnableStaticAddrSpaceMap;  }
@@ -579,6 +586,24 @@ public:
         static SIMOPTS *at = new SIMOPTS;
         return at;
     }
+};
+
+/// @ SimInsCount - keep instruction counts.
+class SimInsCount 
+{
+private:
+   UINT64 load;
+   UINT64 store;
+   UINT64 branch;
+   UINT64 call;
+   UINT64 ret;
+public:
+   SimInsCount() : load(0), store(0), branch(0), call(0), ret(0) {}
+   VOID IncLoad(void)   { ++ load;   }
+   VOID IncStore(void)  { ++ store;  }
+   VOID IncBranch(void) { ++ branch; }
+   VOID IncCall(void)   { ++ call;   }
+   VOID IncRet(void)    { ++ ret;    }
 };
 
 

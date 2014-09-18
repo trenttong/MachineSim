@@ -56,16 +56,18 @@ SIMGLOBALS* simglobals = NULL;
 KNOB<BOOL>   KnobEnableAddressShareDet(KNOB_MODE_WRITEONCE    , "pintool",  "dsd"  ,"0"    , "disable address sharing detection");
 KNOB<BOOL>   KnobEnableTLBCoherence(KNOB_MODE_WRITEONCE       , "pintool",  "tlbc" ,"1"    , "enable tlb coherence");
 KNOB<BOOL>   KnobEnablePTWalkTrace(KNOB_MODE_WRITEONCE        , "pintool",  "ptw"  ,"0"    , "enable page table walk trace analysis");
-KNOB<BOOL>   KnobEnableDynAddrSpaceMap(KNOB_MODE_WRITEONCE    , "pintool",  "dasm"  ,"0"    , "enable dynamic address space map");
-KNOB<BOOL>   KnobEnableStaticAddrSpaceMap(KNOB_MODE_WRITEONCE , "pintool",  "sasm"  ,"0"    , "enable static address space map");
-KNOB<BOOL>   KnobEnableTraceRecord(KNOB_MODE_WRITEONCE     , "pintool",  "tc"   ,"0"    , "Enable Trace simulation");
-KNOB<UINT32> KnobWthdCount(KNOB_MODE_WRITEONCE             , "pintool",  "wthd" ,"0"    , "Number of worker threads created before simulation");
-KNOB<UINT32> KnobWriteMissAllocate(KNOB_MODE_WRITEONCE     , "pintool",  "w"    ,"0"    , "write miss allocate (0 for allocate, 1 for not allocate ");
-KNOB<UINT32> KnobCacheDetailPrint(KNOB_MODE_WRITEONCE      , "pintool",  "dp"   ,"0"    , "Enable detailed private cache miss data");
-KNOB<string> KnobSetType(KNOB_MODE_WRITEONCE               , "pintool",  "r"    ,"LRU"  , "cache replacement policy");
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE            , "pintool",  "o"    ,"cout" , "specify icache file name");
-KNOB<UINT64> KnobMaxSimInstCount(KNOB_MODE_WRITEONCE       , "pintool",  "insc" ,"5000000000", "Number of cores in the simulated system");
-KNOB<string> KnobConfigFile(KNOB_MODE_WRITEONCE            , "pintool",  "c"    ,"/home/xtong/config.xml" , "specify simulation configuration file name");
+KNOB<BOOL>   KnobEnableDynAddrSpaceMap(KNOB_MODE_WRITEONCE    , "pintool",  "dasm"  ,"0"   , "enable dynamic address space map");
+KNOB<BOOL>   KnobEnableStaticAddrSpaceMap(KNOB_MODE_WRITEONCE , "pintool",  "sasm"  ,"0"   , "enable static address space map");
+KNOB<BOOL>   KnobEnableTraceRecord(KNOB_MODE_WRITEONCE        , "pintool",  "tc"   ,"0"    , "Enable Trace simulation");
+KNOB<BOOL>   KnobEnableInsCount(KNOB_MODE_WRITEONCE           , "pintool",  "ic"   ,"0"    , "Enable Instruction Count");
+KNOB<UINT32> KnobWthdCount(KNOB_MODE_WRITEONCE                , "pintool",  "wthd" ,"0"    , "Number of worker threads created before simulation");
+KNOB<UINT32> KnobWriteMissAllocate(KNOB_MODE_WRITEONCE        , "pintool",  "w"    ,"0"    , "write miss allocate (0 for allocate, 1 for not allocate ");
+KNOB<UINT32> KnobCacheDetailPrint(KNOB_MODE_WRITEONCE         , "pintool",  "dp"   ,"0"    , "Enable detailed private cache miss data");
+KNOB<string> KnobSetType(KNOB_MODE_WRITEONCE                  , "pintool",  "r"    ,"LRU"  , "cache replacement policy");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE               , "pintool",  "o"    ,"cout" , "specify icache file name");
+KNOB<UINT64> KnobMaxSimInstCount(KNOB_MODE_WRITEONCE          , "pintool",  "insc" ,"5000000000", "Number of cores in the simulated system");
+KNOB<string> KnobConfigFile(KNOB_MODE_WRITEONCE               , "pintool",  "c"    ,"/home/xtong/config.xml" , "specify simulation configuration file name");
+
 
 
 /* ===================================================================== */
@@ -106,6 +108,7 @@ LOCALFUN VOID initialize_simopts()
     simopts->set_dynamic_addrspace_map(KnobEnableDynAddrSpaceMap.Value());
     simopts->set_static_addrspace_map(KnobEnableStaticAddrSpaceMap.Value());
     simopts->set_tlb_coherence(KnobEnableTLBCoherence.Value());
+    simopts->set_ins_count(KnobEnableInsCount.Value());
 }
 
 LOCALFUN VOID initialize_simglobals() 
@@ -145,6 +148,7 @@ LOCALFUN VOID Fini(int code, VOID * v)
 {
    /* finalize modules. */
    cache_and_tlb_module_fini();
+   instruction_module_fini();
    main_module_fini();
 }
 
@@ -167,12 +171,17 @@ GLOBALFUN int main(int argc, char *argv[])
     /// initialize the main module.
     main_module_init();
 
+    /// initialize instruction module.
+    instruction_module_init();
+
     /// initialize the cache module simulation.
     cache_and_tlb_module_init();
 
     RTN_AddInstrumentFunction(RoutineInstrument, 0);
 
     INS_AddInstrumentFunction(InstructionInstrument, 0);
+    INS_AddInstrumentFunction(InstructionCountOnType, 0);
+
     /// IMG_AddInstrumentFunction(ImageInstrument, 0);
     PIN_AddFiniFunction(Fini, 0);
 
