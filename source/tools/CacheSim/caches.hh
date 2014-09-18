@@ -232,13 +232,14 @@ public:
 };
 
 /// @ CACHE_LRU_SET - brief Cache set with least recently used replacement
-//  @ policy
+//  @ policy. LRU implemented by keeping a timestamp for every access and
+//  @ the entry with the smallest timestamp is the one to replace.
 class CACHE_LRU_SET : public CACHE_SET_BASE
 {
 private:
     // the use history of each cache line in the set. it is increment
     // on every access to this cache set.
-    UINT16* UseStack;
+    UINT64* UseStack;
 public:
     // Optimization for simulation speed, cache the last block.
     UINT8   LastBlock;
@@ -248,7 +249,8 @@ private:
        ++UseStack[index];
        if (CacheTags[index] == tag)
        {
-           UseStack[index] = 0;
+           // Time-stamp this access.
+           UseStack[index] = simglobals->get_global_icount();
            LastBlock = index;
            return true;
        }
@@ -264,7 +266,7 @@ public:
                                  CacheLevel   , 
                                  CacheBase    )
     {
-        UseStack = new UINT16[CacheAssoc];
+        UseStack = new UINT64[CacheAssoc];
         memset(UseStack, 0, sizeof(UINT16)*CacheAssoc);
     }
     virtual ~CACHE_LRU_SET() { free (UseStack); }
@@ -296,7 +298,7 @@ public:
         MaxIndex = 0;
         // find the entry that is least recently used. the entry that has the highest
         // UseStack is the one that is least recently used.
-        FOREACH_CACHEWAY(if (UseStack[index] >= UseStack[MaxIndex]) MaxIndex = index;);
+        FOREACH_CACHEWAY(if (UseStack[index] < UseStack[MaxIndex]) MaxIndex = index;);
 lru_replace_entry:
         etag = CacheTags[MaxIndex];
         // MaxIndex contains the entry that was least recently accessed.
