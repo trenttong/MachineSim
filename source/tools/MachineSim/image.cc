@@ -40,7 +40,7 @@ END_LEGAL */
 
 UINT32 *critsecLevel = NULL;
 
-/// signature int pthread_mutex_lock(pthread_mutex_t *mutex);
+/* wrapper for signature int pthread_mutex_lock(pthread_mutex_t *mutex); */
 static int PthreadMutexLockWrapper(CONTEXT* ctxt, AFUNPTR origFptr, pthread_mutex_t* mtx)
 {
     int retcode;
@@ -54,13 +54,16 @@ static int PthreadMutexLockWrapper(CONTEXT* ctxt, AFUNPTR origFptr, pthread_mute
     if (!retcode)
     {
         critsecLevel[PIN_ThreadId()] ++;
-        simglobals->get_global_simlog()->logme(SIMLOG::SUPERVERBOSE, "thread %d entering CS level %d", 
-                                               PIN_ThreadId(), critsecLevel[PIN_ThreadId()]);
+        simglobals->get_global_simlog()->logme(SIMLOG::SUPERVERBOSE, 
+                                               "thread %d entering CS level %d", 
+                                               PIN_ThreadId(), 
+                                               critsecLevel[PIN_ThreadId()]);
     }
 
     return retcode;
 }
 
+/* wrapper for pthread_mutex_unlock(pthread_mutex_t *mutex); */
 static int PthreadMutexUnlockWrapper(CONTEXT* ctxt, AFUNPTR origFptr, pthread_mutex_t* mtx)
 {
     int retcode;
@@ -74,12 +77,15 @@ static int PthreadMutexUnlockWrapper(CONTEXT* ctxt, AFUNPTR origFptr, pthread_mu
     if (!retcode)
     {
         critsecLevel[PIN_ThreadId()] --;
-        simglobals->get_global_simlog()->logme(SIMLOG::SUPERVERBOSE, "thread %d leaving CS level %d", 
-                                               PIN_ThreadId(), critsecLevel[PIN_ThreadId()]);
+        simglobals->get_global_simlog()->logme(SIMLOG::SUPERVERBOSE, 
+                                               "thread %d leaving CS level %d", 
+                                               PIN_ThreadId(), 
+                                               critsecLevel[PIN_ThreadId()]);
     }
     return retcode;
 }
 
+/* wrapper for pthread create */
 static int PthreadCreateWrapper(CONTEXT* ctxt, AFUNPTR origFptr, pthread_t *thrd, 
                                 const pthread_attr_t *attr, void *sroutine, void *arg)
 {
@@ -98,7 +104,9 @@ static int PthreadCreateWrapper(CONTEXT* ctxt, AFUNPTR origFptr, pthread_t *thrd
     {
         static UINT32 workernum = 0;
         simglobals->get_global_simlowl()->atom_int32_inc((INT*)&workernum);
-        simglobals->get_global_simlog()->logme(SIMLOG::SUPERVERBOSE, "thread %d created", workernum);
+        simglobals->get_global_simlog()->logme(SIMLOG::SUPERVERBOSE, 
+                                               "thread %d created", 
+                                               workernum);
 
         /// expected number of threads created.
         if (workernum >= simopts->get_workercount()) simwait->clrwait(SIMPARAMS::WAIT_WORKER_THREAD);
@@ -106,6 +114,7 @@ static int PthreadCreateWrapper(CONTEXT* ctxt, AFUNPTR origFptr, pthread_t *thrd
     return retcode;
 }
 
+/* ImageInstrument - setup instrumentation of different functions in this image */
 VOID ImageInstrument(IMG img, VOID *v)
 {
     /// instrumented function.

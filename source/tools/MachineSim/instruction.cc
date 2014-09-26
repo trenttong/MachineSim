@@ -50,68 +50,76 @@ VOID DataWriteRef(ADDRINT iaddr, ADDRINT addr, UINT32 size, UINT64 base, UINT64 
 /* ===================================================================== */
 static FILE * tracefile = NULL;
 
-/* ===================================================================== */
-/* Parse static mapping every X billion instructions  this constructs    */
-/* and print the memory layout of the program                            */
-/* ===================================================================== */
-LOCALFUN VOID ParseStaticAddrSpaceMap()
+/* =============================================== */
+/* Instruction Count.                              */
+/* =============================================== */
+
+/* EstimateMIPS - estimate the million instruction per second */
+LOCALFUN VOID EstimateMIPS(UINT64 icount)
 {
-    UINT64 start, end, perm;
-    UINT32 id = PIN_GetPid();
-    // Open and read the /proc/id/maps file
-    char name[128];
-    sprintf(name, "/proc/%d/maps", id); 
-    AddrSpaceMapParser *mp = new AddrSpaceMapParser(name);
-    AddrSpaceMap       *rn = new AddrSpaceMap;
-    while (mp->GetNextRegion(start, end, perm)) rn->RegisterRegion(start, end, perm);
-    rn->PrettyPrint();
-    delete mp;
-    delete rn;
+    /* calculate elapsed time. */
+    clock_gettime(CLOCK_MONOTONIC, simglobals->get_time_fini());
+    double seconds = ((double)simglobals->get_time_fini()->tv_sec + 
+                     NANO*simglobals->get_time_fini()->tv_nsec) -
+                     ((double)simglobals->get_time_init()->tv_sec + 
+                     NANO*simglobals->get_time_fini()->tv_nsec);
+
+    MACHINESIM_PRINT("Simulated %lluM instructions %lf MIPS\n", 
+                    (unsigned long long) icount/MEGA, 
+                    (double) icount/MEGA/seconds);
     return;
 }
 
-/* =============================================== */
-/* PIN instrumentation Reference Count Functions.  */
-/* =============================================== */
-// This function is called before every instruction is executed
+/* MaxInstructionExecuted - check whether to exit due to max inst count */
+LOCALFUN VOID MaxInstructionExecuted(UINT64 icount)
+{
+    if (icount > simopts->get_maxsiminst())
+    {
+        MACHINESIM_PRINT("PIN_ExitApplication due to reaching maximum simulation threshold\n");
+        PIN_ExitApplication(0);
+    }
+    return;
+}
+
+/* DoSimpleICount - This function is called before every instruction is executed */
 LOCALFUN VOID DoSimpleICount(ADDRINT ip, THREADID id) 
 { 
     if (!simwait->dosim()) return;
 
-    // one more instructions executed.
-    //UINT64 tcount = simaops->atom_uint64_inc((UINT64*)&GlobalInstCount);
-    UINT64 tcount = simglobals->add_global_icount();
-    if (!(tcount % (MEGA))) 
-    {
-      /// calculate elapsed time.
-      clock_gettime(CLOCK_MONOTONIC, simglobals->get_time_fini());
-      double seconds = ((double)simglobals->get_time_fini()->tv_sec + 
-                       1.0e-9*simglobals->get_time_fini()->tv_nsec) -
-                       ((double)simglobals->get_time_init()->tv_sec + 
-                       1.0e-9*simglobals->get_time_fini()->tv_nsec);
+    /* one more instructions executed. */
+    UINT64 icount = simglobals->add_global_icount();
+    if (icount % MEGA == 0) EstimateMIPS(icount);
 
-      printf("Simulated %lluM instructions %lf MIPS\n", (unsigned long long) tcount/MEGA, (double) tcount/MEGA/seconds);
-
-      /// printf("simopts->get_maxsiminst() is %d and GlobalInstCount is %d\n", 
-      ///         simopts->get_maxsiminst(), GlobalInstCount);
-      if (simglobals->get_global_icount() > simopts->get_maxsiminst())
-      {
-          printf("PIN_ExitApplication due to reaching maximum simulation threshold\n");
-          PIN_ExitApplication(0);
-      }
-
-      if (simopts->get_static_addrspace_map()) ParseStaticAddrSpaceMap();
-    }
+    MaxInstructionExecuted(icount);
+    
+    /* done */
+    return;
 }
 
 /* DoICountOnType - count instructions based type */
 LOCALFUN VOID DoICountOnType(THREADID id, int type)
 {
-    if (type == SIMGLOBALS::INSTYPE::INS_LOAD)   simglobals->IncLoad();
-    if (type == SIMGLOBALS::INSTYPE::INS_STORE)  simglobals->IncStore();
-    if (type == SIMGLOBALS::INSTYPE::INS_BRANCH) simglobals->IncBranch();
-    if (type == SIMGLOBALS::INSTYPE::INS_CALL)   simglobals->IncCall();
-    if (type == SIMGLOBALS::INSTYPE::INS_RET)    simglobals->IncRet();
+    switch(type)
+    {
+        case SIMGLOBALS::INSTYPE::INS_LOAD:
+             simglobals->IncFetch();
+             break;
+        case SIMGLOBALS::INSTYPE::INS_STORE:
+             simglobals->IncStore();
+             break;
+        case SIMGLOBALS::INSTYPE::INS_CALL:
+             simglobals->IncCall();
+             break;
+        case SIMGLOBALS::INSTYPE::INS_RET:
+             simglobals->IncReturn();
+             break;
+        case SIMGLOBALS::INSTYPE::INS_BRANCH:
+             simglobals->IncBranch();
+             break;
+        default:
+             break;
+    }
+    return;
 }
     
 /* SimpleInstructionCount - insert instrumentation calls to count # of ins. */
@@ -187,27 +195,12 @@ VOID SimpleInstructionCount(INS ins, VOID *v)
     return;
 }
 
-/* ===================================================================== */
-/* Printing Routines */
-/* ===================================================================== */
-LOCALFUN VOID instruction_module_print()
-{
-    char name[128];
-    sprintf(name, "%s.%d", "instruction.out", PIN_GetPid());
-    std::ofstream out(name);
-
-    out << "#==================\n" << "# General stats\n" << "#====================\n";
-    if (simglobals) out << simglobals->StatsInstructionCountLongAll();
-
-    fprintf(stdout, "instruction stats dumped into %s.%d\n", "instruction.out", PIN_GetPid());
-}
-
+/// =========================================================
+//  Cache Simulation Callbacks.
+/// =========================================================
+/* CacheSim - setup calls to do cache simulation */
 VOID CacheSim(INS ins,VOID *v)
 {
-    /// =========================================================
-    //  Cache Simulation Callbacks.
-    /// =========================================================
-
     /// --------------------------------------------- ///
     //  instruction cache simulation                   //
     /// --------------------------------------------- ///
@@ -317,35 +310,35 @@ VOID CacheSim(INS ins,VOID *v)
 /* ===================================================================== */
 /* Instruction Printing for TraceBased Simulation */
 /* ===================================================================== */
-VOID DumpPC(VOID *ip, USIZE size, UINT32 memOperands)
+LOCALFUN VOID DumpPC(VOID *ip, USIZE size, UINT32 memOperands)
 {
-    fprintf(tracefile, "%p  %d  %d  ", ip, size, memOperands);
+    MACHINESIM_FPRINT(tracefile, "%p  %d  %d  ", ip, size, memOperands);
 }
 
-VOID RecordMemRead(VOID * ip, VOID * addr, USIZE size)
+LOCALFUN VOID RecordMemRead(VOID * ip, VOID * addr, USIZE size)
 {
-    fprintf(tracefile,"0x00 %p %d\n", addr,size);
+    MACHINESIM_FPRINT(tracefile,"0x00 %p %d\n", addr,size);
 }
 
-VOID RecordMemWrite(VOID * ip, VOID * addr, USIZE size)
+LOCALFUN VOID RecordMemWrite(VOID * ip, VOID * addr, USIZE size)
 {
-    fprintf(tracefile,"0x01 %p %d\n", addr, size);
+    MACHINESIM_FPRINT(tracefile,"0x01 %p %d\n", addr, size);
 }
 
-VOID DumpInstructionBytes(VOID *ip, USIZE size)
+LOCALFUN VOID DumpInstructionBytes(VOID *ip, USIZE size)
 {
-    for (UINT8 i=0; i<size; i++) fprintf(tracefile, "%x ",(*((UINT8*)ip+i)) );
-    fprintf(tracefile,"\n");
+    for (UINT8 i=0; i<size; i++) MACHINESIM_FPRINT(tracefile, "%x ",(*((UINT8*)ip+i)) );
+    MACHINESIM_FPRINT(tracefile,"\n");
 }
 
-// Pin calls this function every time a new instruction is encountered
-VOID TraceSim(INS ins, VOID *v)
+/* GenerateSimulationTrace - generate instruction trace */
+VOID GenerateSimulationTrace(INS ins, VOID *v)
 {
     USIZE size = INS_Size(ins);
 
     UINT32 memOperands = INS_MemoryOperandCount(ins);
 
-    // Insert a call to DumpPC before every instruction, and pass it the IP
+    /* insert a call to DumpPC before every instruction, and pass it the IP */
     INS_InsertCall(ins, IPOINT_BEFORE,
                    (AFUNPTR)DumpPC,
                    IARG_INST_PTR,
@@ -359,7 +352,7 @@ VOID TraceSim(INS ins, VOID *v)
                    IARG_UINT32 , size ,
                    IARG_END);
 
-    // Iterate over each memory operand of the instruction.
+    /* iterate over each memory operand of the instruction. */
     for (UINT32 memOp = 0; memOp < memOperands; memOp++)
     {
         if (INS_MemoryOperandIsRead(ins, memOp))
@@ -382,20 +375,41 @@ VOID TraceSim(INS ins, VOID *v)
                            IARG_END);
         }
     }
+    return;
 }
 
-/// instrument every instruction.
+/* InstructionInstrument - setup instruction level instructmentation */
 VOID InstructionInstrument(INS ins, VOID *v)
 {
-    // Simple instruction count.
     SimpleInstructionCount(ins, v);
-    // Cache simulation enabled.
     CacheSim(ins, v);
 
-    // Trace base simulation enabled.
-    if (simopts->get_tracerecord()) TraceSim(ins, v);
+    /* trace base simulation enabled. */
+    if (simopts->get_tracerecord()) 
+    {
+        GenerateSimulationTrace(ins, v);
+    }
+    return;
 }
 
+/* ===================================================================== */
+/* Printing Routines */
+/* ===================================================================== */
+LOCALFUN VOID instruction_module_print()
+{
+    char name[128];
+    sprintf(name, "%s.%d", "instruction.out", PIN_GetPid());
+    std::ofstream out(name);
+
+    out << "#==================\n" << "# General stats\n" << "#====================\n";
+    if (simglobals) out << simglobals->StatsInstructionCountLongAll();
+
+    MACHINESIM_FPRINT(stdout, "instruction stats dumped into %s.%d\n", "instruction.out", PIN_GetPid());
+}
+
+/* ===================================================================== */
+/* Module initialization and finialization functions */
+/* ===================================================================== */
 void instruction_module_init(void)
 {
     /* do nothing right now */
@@ -405,3 +419,27 @@ void instruction_module_fini(void)
 {
     instruction_module_print();
 }
+
+#if 0
+/* ===================================================================== */
+/* Parse static mapping every X billion instructions  this constructs    */
+/* and print the memory layout of the program                            */
+/* ===================================================================== */
+LOCALFUN VOID ParseStaticAddrSpaceMap()
+{
+    UINT64 start, end, perm;
+    UINT32 id = PIN_GetPid();
+    // Open and read the /proc/id/maps file
+    char name[128];
+    sprintf(name, "/proc/%d/maps", id); 
+    AddrSpaceMapParser *mp = new AddrSpaceMapParser(name);
+    AddrSpaceMap       *rn = new AddrSpaceMap;
+    while (mp->GetNextRegion(start, end, perm)) rn->RegisterRegion(start, end, perm);
+    rn->PrettyPrint();
+    delete mp;
+    delete rn;
+    return;
+}
+#endif
+
+

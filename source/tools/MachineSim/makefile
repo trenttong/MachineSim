@@ -23,7 +23,7 @@ endif
 
 ifeq ($(TARGET_COMPILER),gnu)
     include ../makefile.gnu.config
-    CXXFLAGS ?= -Wall -std=gnu++0x -fpermissive -Wno-unknown-pragmas -O0  
+    CXXFLAGS ?= -Wall -std=gnu++0x -fpermissive -Wno-unknown-pragmas -O3  
 #$(DBG) $(OPT)
 endif
 
@@ -42,14 +42,14 @@ all: tools
 
 #TOOLS = $(TOOL_ROOTS:%=$(OBJDIR)%$(PINTOOL_SUFFIX))
 
-tools: $(OBJDIR) $(OBJDIR)cachesim.so 
+tools: $(OBJDIR) $(OBJDIR)machinesim.so 
 test: $(OBJDIR) $(TOOL_ROOTS:%=%.test)
 
 OBJS = main.o image.o routine.o basicblock.o caches.o instruction.o utils.o XMLParse.o XMLParser.o 
 XMLDIR=XML
 
 ## build rules
-$(OBJDIR)cachesim.so:	$(OBJS) 	
+$(OBJDIR)machinesim.so:	$(OBJS) 	
 	${PIN_LD} $(PIN_LDFLAGS) $(LINK_DEBUG) ${LINK_OUT}$@ $(OBJS) ${PIN_LPATHS} $(PIN_LIBS) $(DBG)
 
 $(OBJDIR):

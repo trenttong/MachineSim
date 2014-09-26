@@ -20,6 +20,7 @@
 #define BLOCKBITS         (6) 
 #define BLOCKSIZE         (2<<BLOCKBITS) 
 #define PAGESIZE          (1<<PAGEBITS)
+#define NANO              (1.0e-9)
 #define KILO              (1024)
 #define MEGA              (KILO*KILO)
 #define GIGA              (KILO*MEGA)
@@ -30,6 +31,9 @@
 
 #define CACHESIM_likely(x)    __builtin_expect (!!(x), 1)
 #define CACHESIM_unlikely(x)  __builtin_expect (!!(x), 0)
+
+#define MACHINESIM_PRINT    printf
+#define MACHINESIM_FPRINT   fprintf
 
 /* ===================================================================== */
 /* General Utilities */
@@ -461,12 +465,13 @@ private:
     UINT64 BasicBlockCount;
 
 public:
-    VOID IncLoad(void)   { ++ FetchCount;  }
-    VOID IncStore(void)  { ++ StoreCount;  }
-    VOID IncBranch(void) { ++ BranchCount; }
-    VOID IncCall(void)   { ++ CallCount;   }
-    VOID IncRet(void)    { ++ ReturnCount; }
-    VOID IncBasicBlock(void) { ++ BasicBlockCount; }
+    VOID IncInst(void)      { simatom->atom_uint64_inc((UINT64*)&InstCount);        }
+    VOID IncFetch(void)     { simatom->atom_uint64_inc((UINT64*)&FetchCount);       }
+    VOID IncStore(void)     { simatom->atom_uint64_inc((UINT64*)&StoreCount);       }
+    VOID IncBranch(void)    { simatom->atom_uint64_inc((UINT64*)&BranchCount);      }
+    VOID IncCall(void)      { simatom->atom_uint64_inc((UINT64*)&CallCount);        }
+    VOID IncReturn(void)    { simatom->atom_uint64_inc((UINT64*)&ReturnCount);      }
+    VOID IncBasicBlock(void){ simatom->atom_uint64_inc((UINT64*)&BasicBlockCount);  }
 private:
     // Global time.
     struct timespec *tinit;

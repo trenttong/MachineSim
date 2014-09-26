@@ -38,13 +38,13 @@ END_LEGAL */
 #include "pin.H"
 #include "utils.hh"
 
+/* DoBasicBlockCount - count # of basicblocks executed */
 LOCALFUN void DoBasicBlockCount(void) 
 {
     simglobals->IncBasicBlock();
 }
 
-// Pin calls this function every time a new basic block is encountered
-// It inserts a call to docount
+/* TraceInstrument - setup call to do basicblock level instrumentation */
 VOID TraceInstrument(TRACE trace, VOID *v)
 {
     // Visit every basic block  in the trace
