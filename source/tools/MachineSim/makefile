@@ -23,7 +23,7 @@ endif
 
 ifeq ($(TARGET_COMPILER),gnu)
     include ../makefile.gnu.config
-    CXXFLAGS ?= -Wall -std=gnu++0x -fpermissive -Wno-unknown-pragmas -O3  
+    CXXFLAGS ?= -Wall -std=gnu++0x -fpermissive -Wno-unknown-pragmas -O0  
 #$(DBG) $(OPT)
 endif
 

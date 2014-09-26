@@ -104,6 +104,7 @@ LOCALFUN VOID DoSimpleICount(ADDRINT ip, THREADID id)
     }
 }
 
+/* DoICountOnType - count instructions based type */
 LOCALFUN VOID DoICountOnType(THREADID id, int type)
 {
     if (type == SIMGLOBALS::INSTYPE::INS_LOAD)   simglobals->IncLoad();
@@ -113,7 +114,7 @@ LOCALFUN VOID DoICountOnType(THREADID id, int type)
     if (type == SIMGLOBALS::INSTYPE::INS_RET)    simglobals->IncRet();
 }
     
-/// @ SimpleInstructionCount - count the # of instructions executed.
+/* SimpleInstructionCount - insert instrumentation calls to count # of ins. */
 VOID SimpleInstructionCount(INS ins, VOID *v)
 {
     /// =========================================================
@@ -159,6 +160,10 @@ VOID SimpleInstructionCount(INS ins, VOID *v)
                      IARG_END);
     }
 
+
+    /// --------------------------------------------- ///
+    //  Call Instruction                               //
+    /// --------------------------------------------- ///
     if (INS_IsCall(ins))
     {
        INS_InsertCall(ins, IPOINT_BEFORE, 
@@ -168,6 +173,9 @@ VOID SimpleInstructionCount(INS ins, VOID *v)
                      IARG_END);
     }
 
+    /// --------------------------------------------- ///
+    //  Return Instruction                             //
+    /// --------------------------------------------- ///
     if (INS_IsRet(ins))
     {
        INS_InsertCall(ins, IPOINT_BEFORE, 
@@ -192,12 +200,6 @@ LOCALFUN VOID instruction_module_print()
     if (simglobals) out << simglobals->StatsInstructionCountLongAll();
 
     fprintf(stdout, "instruction stats dumped into %s.%d\n", "instruction.out", PIN_GetPid());
-}
-
-/// @ InstructionCountOnType - count instruction based on type.
-VOID InstructionCountOnType(INS ins, VOID *v)
-{
-
 }
 
 VOID CacheSim(INS ins,VOID *v)
@@ -402,5 +404,4 @@ void instruction_module_init(void)
 void instruction_module_fini(void)
 {
     instruction_module_print();
-    if (simglobals) delete simglobals;
 }

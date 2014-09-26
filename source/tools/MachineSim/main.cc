@@ -184,8 +184,8 @@ GLOBALFUN int main(int argc, char *argv[])
     RTN_AddInstrumentFunction(RoutineInstrument, 0);
     INS_AddInstrumentFunction(InstructionInstrument, 0);
     TRACE_AddInstrumentFunction(TraceInstrument, 0);
-
     /// IMG_AddInstrumentFunction(ImageInstrument, 0);
+
     PIN_AddFiniFunction(Fini, 0);
 
     // Never returns
