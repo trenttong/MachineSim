@@ -45,7 +45,7 @@ all: tools
 tools: $(OBJDIR) $(OBJDIR)cachesim.so 
 test: $(OBJDIR) $(TOOL_ROOTS:%=%.test)
 
-OBJS = main.o image.o routine.o caches.o instruction.o utils.o XMLParse.o XMLParser.o 
+OBJS = main.o image.o routine.o basicblock.o caches.o instruction.o utils.o XMLParse.o XMLParser.o 
 XMLDIR=XML
 
 ## build rules
@@ -58,6 +58,8 @@ $(OBJDIR):
 main.o:	main.cc utils.hh
 	$(CXX) -c  $(CXXFLAGS) $(PIN_CXXFLAGS) ${OUTOPT}$@ $<
 image.o:	image.cc utils.hh
+	$(CXX) -c  $(CXXFLAGS) $(PIN_CXXFLAGS) ${OUTOPT}$@ $<
+basicblock.o:	basicblock.cc utils.hh
 	$(CXX) -c  $(CXXFLAGS) $(PIN_CXXFLAGS) ${OUTOPT}$@ $<
 routine.o:	routine.cc utils.hh
 	$(CXX) -c $(CXXFLAGS) $(PIN_CXXFLAGS) ${OUTOPT}$@ $<

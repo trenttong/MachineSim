@@ -149,6 +149,7 @@ LOCALFUN VOID Fini(int code, VOID * v)
    /* finalize modules. */
    cache_and_tlb_module_fini();
    instruction_module_fini();
+   basicblock_module_fini();
    main_module_fini();
 }
 
@@ -174,13 +175,15 @@ GLOBALFUN int main(int argc, char *argv[])
     /// initialize instruction module.
     instruction_module_init();
 
+    /// initialize basicblock module.
+    basicblock_module_init();
+
     /// initialize the cache module simulation.
     cache_and_tlb_module_init();
 
     RTN_AddInstrumentFunction(RoutineInstrument, 0);
-
     INS_AddInstrumentFunction(InstructionInstrument, 0);
-    INS_AddInstrumentFunction(InstructionCountOnType, 0);
+    TRACE_AddInstrumentFunction(TraceInstrument, 0);
 
     /// IMG_AddInstrumentFunction(ImageInstrument, 0);
     PIN_AddFiniFunction(Fini, 0);

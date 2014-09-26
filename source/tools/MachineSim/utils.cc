@@ -133,6 +133,10 @@ std::string SIMGLOBALS::StatsInstructionCountLongAll()
     out += "Call	" + mydecstr(CallCount, 8);
     out += "\n";
     out += "Return	" + mydecstr(ReturnCount, 8);
+    out += "\n";
+    out += "BasicBlock	" + mydecstr(BasicBlockCount, 8);
+    out += "\n";
+
     return out;
 }
 

@@ -49,6 +49,8 @@ VOID main_module_init();
 VOID main_module_fini();
 VOID instruction_module_init();
 VOID instruction_module_fini();
+VOID basicblock_module_init();
+VOID basicblock_module_fini();
 VOID cache_and_tlb_module_init();
 VOID cache_and_tlb_module_fini();
 
@@ -59,7 +61,7 @@ VOID ImageInstrument(IMG img, VOID *v);
 VOID RoutineInstrument(RTN rtn, VOID *);
 VOID InstructionInstrument(INS ins, VOID *v);
 VOID SimpleInstructionCount(INS ins, VOID *v);
-VOID InstructionCountOnType(INS ins, VOID *v);
+VOID TraceInstrument(TRACE trace, VOID *v);
 
 /// @ forward class declaration.
 class SIMLOWLEVEL;
@@ -456,6 +458,7 @@ private:
     UINT64 BranchCount;
     UINT64 CallCount;
     UINT64 ReturnCount;
+    UINT64 BasicBlockCount;
 
 public:
     VOID IncLoad(void)   { ++ FetchCount;  }
@@ -463,6 +466,7 @@ public:
     VOID IncBranch(void) { ++ BranchCount; }
     VOID IncCall(void)   { ++ CallCount;   }
     VOID IncRet(void)    { ++ ReturnCount; }
+    VOID IncBasicBlock(void) { ++ BasicBlockCount; }
 private:
     // Global time.
     struct timespec *tinit;
