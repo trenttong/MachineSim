@@ -440,9 +440,30 @@ public:
 /// SIMLOCKS - simulation locks.
 class SIMGLOBALS
 {
+public:
+   typedef enum {
+      INS_LOAD=0,
+      INS_STORE,
+      INS_BRANCH,
+      INS_CALL,
+      INS_RET
+   }  INSTYPE;
 private:
     // Global instruction count.
     UINT64 InstCount;
+    UINT64 FetchCount;
+    UINT64 StoreCount;
+    UINT64 BranchCount;
+    UINT64 CallCount;
+    UINT64 ReturnCount;
+
+public:
+    VOID IncLoad(void)   { ++ FetchCount;  }
+    VOID IncStore(void)  { ++ StoreCount;  }
+    VOID IncBranch(void) { ++ BranchCount; }
+    VOID IncCall(void)   { ++ CallCount;   }
+    VOID IncRet(void)    { ++ ReturnCount; }
+private:
     // Global time.
     struct timespec *tinit;
     struct timespec *tfini;
@@ -453,9 +474,8 @@ private:
     // used to do atomic operations.
     SIMLOWLEVEL *simatom;
 private:
-    SIMGLOBALS()
+    SIMGLOBALS() : InstCount(0), FetchCount(0), StoreCount(0), BranchCount(0), CallCount(0), ReturnCount(0)
     {
-       InstCount = 0;
        tinit = new struct timespec;
        tfini = new struct timespec;
        *tfini = *tinit = { 0, 0 };
@@ -491,6 +511,7 @@ public:
     SIMLOWLEVEL*     get_global_simlowl()const  { return simatom;     }
     UINT64           get_global_icount() const  { return InstCount;   }
     UINT64           add_global_icount()        { return simatom->atom_uint64_inc((UINT64*)&InstCount); }
+    std::string      StatsInstructionCountLongAll();
 };
 
 /// SIMOPTS - simulation options.

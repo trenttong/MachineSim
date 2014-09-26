@@ -49,7 +49,6 @@ VOID DataWriteRef(ADDRINT iaddr, ADDRINT addr, UINT32 size, UINT64 base, UINT64 
 /* Globals variables */
 /* ===================================================================== */
 static FILE * tracefile = NULL;
-static SimInsCount *siminscount = NULL;
 
 /* ===================================================================== */
 /* Parse static mapping every X billion instructions  this constructs    */
@@ -105,6 +104,14 @@ LOCALFUN VOID DoSimpleICount(ADDRINT ip, THREADID id)
     }
 }
 
+LOCALFUN VOID DoICountOnType(THREADID id, int type)
+{
+    if (type == SIMGLOBALS::INSTYPE::INS_LOAD)   simglobals->IncLoad();
+    if (type == SIMGLOBALS::INSTYPE::INS_STORE)  simglobals->IncStore();
+    if (type == SIMGLOBALS::INSTYPE::INS_BRANCH) simglobals->IncBranch();
+    if (type == SIMGLOBALS::INSTYPE::INS_CALL)   simglobals->IncCall();
+    if (type == SIMGLOBALS::INSTYPE::INS_RET)    simglobals->IncRet();
+}
     
 /// @ SimpleInstructionCount - count the # of instructions executed.
 VOID SimpleInstructionCount(INS ins, VOID *v)
@@ -117,35 +124,7 @@ VOID SimpleInstructionCount(INS ins, VOID *v)
                    IARG_INST_PTR, 
                    IARG_THREAD_ID, 
                    IARG_END);
-}
 
-/* ===================================================================== */
-/* Printing Routines */
-/* ===================================================================== */
-LOCALFUN VOID instruction_module_print()
-{
-    char name[128];
-    sprintf(name, "%s.%d", "instruction.out", PIN_GetPid());
-    std::ofstream out(name);
-
-    out << "#==================\n" << "# General stats\n" << "#====================\n";
-    if (siminscount) out << siminscount->StatsLongAll();
-
-    fprintf(stdout, "instruction stats dumped into %s.%d\n", "instruction.out", PIN_GetPid());
-}
-
-LOCALFUN VOID DoICountOnType(THREADID id, int type)
-{
-    if (type == SimInsCount::INSTYPE::INS_LOAD)   siminscount->IncLoad();
-    if (type == SimInsCount::INSTYPE::INS_STORE)  siminscount->IncStore();
-    if (type == SimInsCount::INSTYPE::INS_BRANCH) siminscount->IncBranch();
-    if (type == SimInsCount::INSTYPE::INS_CALL)   siminscount->IncCall();
-    if (type == SimInsCount::INSTYPE::INS_RET)    siminscount->IncRet();
-}
-
-/// @ InstructionCountOnType - count instruction based on type.
-VOID InstructionCountOnType(INS ins, VOID *v)
-{
     /// --------------------------------------------- ///
     //  Read or write memory location                  //
     /// --------------------------------------------- ///
@@ -154,7 +133,7 @@ VOID InstructionCountOnType(INS ins, VOID *v)
        INS_InsertCall(ins, IPOINT_BEFORE, 
                      (AFUNPTR)DoICountOnType, 
                      IARG_THREAD_ID, 
-                     IARG_UINT32, SimInsCount::INSTYPE::INS_LOAD,
+                     IARG_UINT32, SIMGLOBALS::INSTYPE::INS_LOAD,
                      IARG_END);
     }
 
@@ -163,7 +142,7 @@ VOID InstructionCountOnType(INS ins, VOID *v)
        INS_InsertCall(ins, IPOINT_BEFORE, 
                      (AFUNPTR)DoICountOnType, 
                      IARG_THREAD_ID, 
-                     IARG_UINT32, SimInsCount::INSTYPE::INS_STORE,
+                     IARG_UINT32, SIMGLOBALS::INSTYPE::INS_STORE,
                      IARG_END);
     }
 
@@ -176,7 +155,7 @@ VOID InstructionCountOnType(INS ins, VOID *v)
        INS_InsertCall(ins, IPOINT_BEFORE, 
                      (AFUNPTR)DoICountOnType, 
                      IARG_THREAD_ID, 
-                     IARG_UINT32, SimInsCount::INSTYPE::INS_BRANCH,
+                     IARG_UINT32, SIMGLOBALS::INSTYPE::INS_BRANCH,
                      IARG_END);
     }
 
@@ -185,7 +164,7 @@ VOID InstructionCountOnType(INS ins, VOID *v)
        INS_InsertCall(ins, IPOINT_BEFORE, 
                      (AFUNPTR)DoICountOnType, 
                      IARG_THREAD_ID, 
-                     IARG_UINT32, SimInsCount::INSTYPE::INS_CALL,
+                     IARG_UINT32, SIMGLOBALS::INSTYPE::INS_CALL,
                      IARG_END);
     }
 
@@ -194,10 +173,31 @@ VOID InstructionCountOnType(INS ins, VOID *v)
        INS_InsertCall(ins, IPOINT_BEFORE, 
                      (AFUNPTR)DoICountOnType, 
                      IARG_THREAD_ID, 
-                     IARG_UINT32, SimInsCount::INSTYPE::INS_RET,
+                     IARG_UINT32, SIMGLOBALS::INSTYPE::INS_RET,
                      IARG_END);
     }
     return;
+}
+
+/* ===================================================================== */
+/* Printing Routines */
+/* ===================================================================== */
+LOCALFUN VOID instruction_module_print()
+{
+    char name[128];
+    sprintf(name, "%s.%d", "instruction.out", PIN_GetPid());
+    std::ofstream out(name);
+
+    out << "#==================\n" << "# General stats\n" << "#====================\n";
+    if (simglobals) out << simglobals->StatsInstructionCountLongAll();
+
+    fprintf(stdout, "instruction stats dumped into %s.%d\n", "instruction.out", PIN_GetPid());
+}
+
+/// @ InstructionCountOnType - count instruction based on type.
+VOID InstructionCountOnType(INS ins, VOID *v)
+{
+
 }
 
 VOID CacheSim(INS ins,VOID *v)
@@ -396,11 +396,11 @@ VOID InstructionInstrument(INS ins, VOID *v)
 
 void instruction_module_init(void)
 {
-    siminscount = new SimInsCount();
+    /* do nothing right now */
 }
 
 void instruction_module_fini(void)
 {
     instruction_module_print();
-    if (siminscount) delete siminscount;
+    if (simglobals) delete simglobals;
 }
