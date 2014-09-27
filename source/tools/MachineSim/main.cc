@@ -43,31 +43,26 @@ END_LEGAL */
 /* ===================================================================== */
 /* Globals variables */
 /* ===================================================================== */
-SIMXLATOR * simxlator  = NULL;
-SIMPARAMS * simwait    = NULL;
-SIMOPTS   * simopts    = NULL;
-SIMSTATS  * simstats   = NULL;
-SIMGLOBALS* simglobals = NULL;
+SIMXLATOR * SimXlator  = NULL;
+SIMPARAMS * SimWait    = NULL;
+SIMOPTS   * SimOpts    = NULL;
+SIMSTATS  * SimStats   = NULL;
+SIMGLOBALS* SimTheOne  = NULL;
 
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
-KNOB<BOOL>   KnobEnableAddressShareDet(KNOB_MODE_WRITEONCE    , "pintool",  "dsd"  ,"0"    , "disable address sharing detection");
-KNOB<BOOL>   KnobEnableTLBCoherence(KNOB_MODE_WRITEONCE       , "pintool",  "tlbc" ,"1"    , "enable tlb coherence");
-KNOB<BOOL>   KnobEnablePTWalkTrace(KNOB_MODE_WRITEONCE        , "pintool",  "ptw"  ,"0"    , "enable page table walk trace analysis");
-KNOB<BOOL>   KnobEnableDynAddrSpaceMap(KNOB_MODE_WRITEONCE    , "pintool",  "dasm"  ,"0"   , "enable dynamic address space map");
-KNOB<BOOL>   KnobEnableStaticAddrSpaceMap(KNOB_MODE_WRITEONCE , "pintool",  "sasm"  ,"0"   , "enable static address space map");
-KNOB<BOOL>   KnobEnableTraceRecord(KNOB_MODE_WRITEONCE        , "pintool",  "tc"   ,"0"    , "Enable Trace simulation");
-KNOB<BOOL>   KnobEnableInsCount(KNOB_MODE_WRITEONCE           , "pintool",  "ic"   ,"0"    , "Enable Instruction Count");
-KNOB<UINT32> KnobWthdCount(KNOB_MODE_WRITEONCE                , "pintool",  "wthd" ,"0"    , "Number of worker threads created before simulation");
-KNOB<UINT32> KnobWriteMissAllocate(KNOB_MODE_WRITEONCE        , "pintool",  "w"    ,"0"    , "write miss allocate (0 for allocate, 1 for not allocate ");
-KNOB<UINT32> KnobCacheDetailPrint(KNOB_MODE_WRITEONCE         , "pintool",  "dp"   ,"0"    , "Enable detailed private cache miss data");
-KNOB<string> KnobSetType(KNOB_MODE_WRITEONCE                  , "pintool",  "r"    ,"LRU"  , "cache replacement policy");
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE               , "pintool",  "o"    ,"cout" , "specify icache file name");
-KNOB<UINT64> KnobMaxSimInstCount(KNOB_MODE_WRITEONCE          , "pintool",  "insc" ,"5000000000", "Number of cores in the simulated system");
-KNOB<string> KnobConfigFile(KNOB_MODE_WRITEONCE               , "pintool",  "c"    ,"/home/xtong/config.xml" , "specify simulation configuration file name");
-
+KNOB<BOOL>   KnobInstructionCountOnly(KNOB_MODE_WRITEONCE     , "pintool",  "instcount"     ,"0"    , "instruction count only");
+KNOB<BOOL>   KnobMemorySimulationOnly(KNOB_MODE_WRITEONCE     , "pintool",  "memsim"        ,"0"    , "simulate memory only");
+KNOB<BOOL>   KnobEnableTraceRecord(KNOB_MODE_WRITEONCE        , "pintool",  "tc"            ,"0"    , "Enable Trace simulation");
+KNOB<UINT32> KnobWthdCount(KNOB_MODE_WRITEONCE                , "pintool",  "wthd"          ,"0"    , "Number of worker threads created before simulation");
+KNOB<UINT32> KnobWriteMissAllocate(KNOB_MODE_WRITEONCE        , "pintool",  "w"             ,"0"    , "write miss allocate (0 for allocate, 1 for not allocate ");
+KNOB<UINT32> KnobCacheDetailPrint(KNOB_MODE_WRITEONCE         , "pintool",  "dp"            ,"0"    , "Enable detailed private cache miss data");
+KNOB<string> KnobSetType(KNOB_MODE_WRITEONCE                  , "pintool",  "r"             ,"LRU"  , "cache replacement policy");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE               , "pintool",  "o"             ,"cout" , "specify icache file name");
+KNOB<UINT64> KnobMaxSimInstCount(KNOB_MODE_WRITEONCE          , "pintool",  "insc"          ,"5000000000", "Number of cores in the simulated system");
+KNOB<string> KnobConfigFile(KNOB_MODE_WRITEONCE               , "pintool",  "c"             ,"/home/xtong/config.xml" , "specify simulation configuration file name");
 
 
 /* ===================================================================== */
@@ -76,72 +71,66 @@ KNOB<string> KnobConfigFile(KNOB_MODE_WRITEONCE               , "pintool",  "c" 
 /// initialize_simobjs - initialize all the global objects of the simulator.
 LOCALFUN VOID initialize_simobjs()
 {
-    simstats   = SIMSTATS::get_singleton();
-    simxlator  = SIMXLATOR::get_singleton();
-    simwait    = SIMPARAMS::get_singleton();
-    simopts    = SIMOPTS::get_singleton();
-    simglobals = SIMGLOBALS::get_singleton();
+    SimStats   = SIMSTATS::get_singleton();
+    SimXlator  = SIMXLATOR::get_singleton();
+    SimWait    = SIMPARAMS::get_singleton();
+    SimOpts    = SIMOPTS::get_singleton();
+    SimTheOne  = SIMGLOBALS::get_singleton();
 }
 
 /// finalize_simobjs - destroy all the global objects of the simulator.
 LOCALFUN VOID finalize_simobjs()
 {
-   delete simopts    ;
-   delete simxlator  ;
-   delete simwait    ;
-   delete simstats   ;
-   delete simglobals ;
+   delete SimOpts    ;  SimOpts   = NULL;
+   delete SimXlator  ;  SimXlator = NULL;
+   delete SimWait    ;  SimWait   = NULL;
+   delete SimStats   ;  SimStats  = NULL;
+   delete SimTheOne  ;  SimTheOne = NULL;
 }
 
-/// initialize_simopts - initialize simulation options.
-LOCALFUN VOID initialize_simopts()
+/// initialize_SimOpts - initialize simulation options.
+LOCALFUN VOID initialize_SimOpts()
 {
-    /// cache and tlb simulation options.
-    simopts->set_replacepolicy(KnobSetType.Value());
-
-    /// miscellaneous simulation options.
-    simopts->set_tracerecord(KnobEnableTraceRecord.Value());
-    simopts->set_maxsiminst(KnobMaxSimInstCount.Value());
-    simopts->set_xml_parser(new ParseXML());
-    simopts->get_xml_parser()->parse(KnobConfigFile.Value().c_str());
-    simopts->set_ptwalk_trace(KnobEnablePTWalkTrace.Value());
-    simopts->set_dynamic_addrspace_map(KnobEnableDynAddrSpaceMap.Value());
-    simopts->set_static_addrspace_map(KnobEnableStaticAddrSpaceMap.Value());
-    simopts->set_tlb_coherence(KnobEnableTLBCoherence.Value());
-    simopts->set_ins_count(KnobEnableInsCount.Value());
+    SimOpts->set_ins_count(KnobInstructionCountOnly.Value());
+    SimOpts->set_mem_simul(KnobMemorySimulationOnly.Value());
+    SimOpts->set_replacepolicy(KnobSetType.Value());
+    SimOpts->set_tracerecord(KnobEnableTraceRecord.Value());
+    SimOpts->set_maxsiminst(KnobMaxSimInstCount.Value());
+    SimOpts->set_xml_parser(new ParseXML());
+    SimOpts->get_xml_parser()->parse(KnobConfigFile.Value().c_str());
 }
 
-LOCALFUN VOID initialize_simglobals() 
+LOCALFUN VOID initialize_SimTheOne() 
 {
-    clock_gettime(CLOCK_MONOTONIC, simglobals->get_time_init());
+    clock_gettime(CLOCK_MONOTONIC, SimTheOne->get_time_init());
 }
 
-/// finalize_simopts - finalize the simulation options.
-LOCALFUN VOID finalize_simopts()
+/// finalize_SimOpts - finalize the simulation options.
+LOCALFUN VOID finalize_SimOpts()
 {
-    simopts->reset();
+    SimOpts->reset();
 }
 
-/// initialize_simwait - initialize simulation wait reasons.
-LOCALFUN VOID initialize_simwait()
+/// initialize_SimWait - initialize simulation wait reasons.
+LOCALFUN VOID initialize_SimWait()
 {
-///    simwait->setwait(SIMPARAMS::WAIT_WORKER_THREAD);
+///    SimWait->setwait(SIMPARAMS::WAIT_WORKER_THREAD);
 }
 
 /// main_module_init - initialize the main module of the simulator.
 VOID main_module_init()
 {
     initialize_simobjs();
-    initialize_simopts();
-    initialize_simwait();
-    initialize_simglobals();
+    initialize_SimOpts();
+    initialize_SimWait();
+    initialize_SimTheOne();
 }
 
 /// main_module_fini - finalize the main module of the simulator.
 VOID main_module_fini() 
 {
    finalize_simobjs();
-   finalize_simopts();
+   finalize_SimOpts();
 }
 
 LOCALFUN VOID Fini(int code, VOID * v)
@@ -155,7 +144,9 @@ LOCALFUN VOID Fini(int code, VOID * v)
 
 LOCALFUN INT32 Usage()
 {
-    cerr <<"This pin tool implements multiple levels of caches and TLBs.\n\n";
+    LOG("-instcount\t\t\t Turn on instruction count\n");
+    LOG("-memsim\t\t\t Turn on cache hiearchy simulation\n");
+    LOG("This pin tool implements multiple levels of caches and TLBs.\n\n");
     return -1;
 }
 

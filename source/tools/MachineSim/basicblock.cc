@@ -41,11 +41,10 @@ END_LEGAL */
 /* DoBasicBlockCount - count # of basicblocks executed */
 LOCALFUN void DoBasicBlockCount(void) 
 {
-    simglobals->IncBasicBlock();
+    SimTheOne->IncBasicBlock();
 }
 
-/* TraceInstrument - setup call to do basicblock level instrumentation */
-VOID TraceInstrument(TRACE trace, VOID *v)
+LOCALFUN VOID SimpleBasicBlockCount(TRACE trace, VOID *v)
 {
     // Visit every basic block  in the trace
     for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
@@ -53,6 +52,13 @@ VOID TraceInstrument(TRACE trace, VOID *v)
         // Insert a call to docount before every bbl, passing the number of instructions
         BBL_InsertCall(bbl, IPOINT_BEFORE, DoBasicBlockCount, IARG_END);
     }
+}
+ 
+
+/* TraceInstrument - setup call to do basicblock level instrumentation */
+VOID TraceInstrument(TRACE trace, VOID *v)
+{
+    if (SimOpts->get_ins_count()) SimpleBasicBlockCount(trace, v);
     return;
 }
 

@@ -250,7 +250,7 @@ private:
        if (CacheTags[index] == tag)
        {
            // Time-stamp this access.
-           UseStack[index] = simglobals->get_global_icount();
+           UseStack[index] = SimTheOne->get_global_icount();
            LastBlock = index;
            return true;
        }
@@ -598,7 +598,7 @@ string CACHE_BASE::StatsLong(string prefix, CACHE_TYPE cache_type, THREADID tid)
            "  " +fltstr(100.0 * Accesses(tid) / Accesses(tid), 2, 6) + "%\n";
 
     out += prefix + ljstr("Total MPKI:  ", headerWidth)
-           + "  " +fltstr(1000.0 * Misses(tid) / simglobals->get_global_icount(), 2, 6) + "\n";
+           + "  " +fltstr(1000.0 * Misses(tid) / SimTheOne->get_global_icount(), 2, 6) + "\n";
 
     out += "\n";
 
@@ -653,7 +653,7 @@ string CACHE_BASE::StatsLongAll(string prefix, CACHE_TYPE cache_type)
            "  " +fltstr(100.0 * AccessesAll() / AccessesAll(), 2, 6) + "%\n";
 
     out += prefix + ljstr("Total MPKI:  ", headerWidth)
-           + "  " +fltstr(1000.0 * MissesAll() / simglobals->get_global_icount(), 2, 6) + "\n";
+           + "  " +fltstr(1000.0 * MissesAll() / SimTheOne->get_global_icount(), 2, 6) + "\n";
 
 
 #if 0

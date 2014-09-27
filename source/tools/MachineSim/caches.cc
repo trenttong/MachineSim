@@ -196,13 +196,13 @@ LOCALFUN VOID CACHE_Ul3Access(ADDRINT  iaddr               ,
                               CACHE_BASE::ACCESS_TYPE type , 
                               THREADID tid                 )
 {
-    if (!simwait->dosim()) return;
+    if (!SimWait->dosim()) return;
 
     // third level unified cache
     // level 3 cache is shared ... it could be access concurrently by different threads.
-    simglobals->get_global_simlock()->lock_l3_cache(tid);
+    SimTheOne->get_global_simlock()->lock_l3_cache(tid);
     if (ul3) ul3->Access(iaddr, addr, size, type, tid);
-    simglobals->get_global_simlock()->unlock_l3_cache(tid);
+    SimTheOne->get_global_simlock()->unlock_l3_cache(tid);
     return;
 }
 
@@ -212,7 +212,7 @@ LOCALFUN VOID CACHE_Ul2Access(ADDRINT  iaddr               ,
                               CACHE_BASE::ACCESS_TYPE type , 
                               THREADID tid                 )
 {
-    if (!simwait->dosim()) return;
+    if (!SimWait->dosim()) return;
 
     // second level unified cache
     BOOL ul2Hit = 0;
@@ -282,7 +282,7 @@ LOCALFUN VOID AddrSpace_MemAccess(ADDRINT  addr                  ,
                                   CACHE_BASE::ACCESS_TYPE type   , 
                                   THREADID tid                   )
 {
-    if (!simwait->dosim()) return;
+    if (!SimWait->dosim()) return;
     ActivePages[GETPAGE(addr)] = 1;
     return;
 }
@@ -315,8 +315,7 @@ LOCALFUN VOID TLB_MemAccess(ADDRINT  addr                  ,
                             CACHE_BASE::ACCESS_TYPE type   , 
                             THREADID tid                   )
 {
-    if (!simwait->dosim()) return;
-    if (simopts->get_ptwalk_trace()) PTWalkTrace.push_back(addr);
+    if (!SimWait->dosim()) return;
     return;
 }
 
@@ -324,7 +323,7 @@ LOCALFUN VOID TLB_Ul2Access(ADDRINT  addr                  ,
                             CACHE_BASE::ACCESS_TYPE type   , 
                             THREADID tid                   )
 {
-    if (!simwait->dosim()) return;
+    if (!SimWait->dosim()) return;
 
     BOOL ul2Hit = 0;
     if (utlb2 && !ul2Hit) ul2Hit = utlb2->AccessPage(addr, type, tid);
@@ -376,7 +375,7 @@ LOCALFUN VOID InsRefBlock(ADDRINT addr                 ,
 {
 
     // decode a block at a time.
-    if (!simwait->dosim()) return;
+    if (!SimWait->dosim()) return;
 
     const CACHE_BASE::ACCESS_TYPE type = CACHE_BASE::ACCESS_TYPE_LOAD;
     BOOL iche_hit = 0;
@@ -406,9 +405,7 @@ LOCALFUN VOID MemRefMulti(ADDRINT  iaddr              ,
                           THREADID tid                )
 {
     // waiting for simulation to start.
-    if (!simwait->dosim()) return;
-
-    if (simopts->get_dynamic_addrspace_map()) AddrSpace_MemAccess(addr, size, type, tid);
+    if (!SimWait->dosim()) return;
 
     BOOL dche_hit = 0;
     BOOL dtlb_hit = 0;
@@ -437,9 +434,7 @@ LOCALFUN VOID MemRefSingle(ADDRINT   iaddr             ,
                            THREADID  tid               )
 {
     // waiting for simulation to start.
-    if (!simwait->dosim()) return;
-
-    if (simopts->get_dynamic_addrspace_map()) AddrSpace_MemAccess(addr, size, type, tid);
+    if (!SimWait->dosim()) return;
 
     BOOL dche_hit = 0;
     BOOL dtlb_hit = 0;
@@ -494,10 +489,6 @@ VOID DataWriteRef(ADDRINT  iaddr                       ,
                                        (INVOKE_MEM_REF_PROC) MemRefSingle :
                                        (INVOKE_MEM_REF_PROC) MemRefMulti) ;
     simFun(iaddr, addr, size, CACHE_BASE::ACCESS_TYPE_STORE, baseval, idxval, tid);
-
-    if (tlbc->SingleOwner(addr)) simglobals->get_global_simlowl()->atom_uint64_inc(&elided_mfence);
-    else simglobals->get_global_simlowl()->atom_uint64_inc(&executed_mfence);
-
     return;
 }
 
@@ -512,7 +503,7 @@ LOCALFUN VOID cache_and_tlb_module_print()
 
     out << "#==================\n" << "# General stats\n" << "#====================\n";
     out << "# :" << endl;
-    out << "# " << simglobals->get_global_icount() << " instructions executed\n";
+    out << "# " << SimTheOne->get_global_icount() << " instructions executed\n";
     out << "# " << endl;
 
     if (il1)   out << il1->StatsParam();
@@ -577,9 +568,6 @@ LOCALFUN VOID cache_and_tlb_module_print()
     out << tlbc->StatsLong();
     }
 
-    if (simopts->get_ptwalk_trace())  Analyze_TLB_MemAccess(out);
-    if (simopts->get_dynamic_addrspace_map()) AddrSpace_MemAccess_Print(out);
-
     out << "# elided mfence " << elided_mfence << " executed_mfence " << executed_mfence << endl;
 
     /* done */
@@ -594,117 +582,115 @@ LOCALFUN VOID cache_and_tlb_module_print()
 /// init_sim_cache - initialize cache module.
 VOID cache_and_tlb_module_init()
 {
-    if (simopts->get_xml_parser()->sys.L1_icache.cache_enable)
+    if (SimOpts->get_xml_parser()->sys.L1_icache.cache_enable)
     {
         il1 = new CACHE("Micro 4K TLB Cache", 1,
-                        simopts->get_xml_parser()->sys.L1_icache.number_entries*
-                        simopts->get_xml_parser()->sys.L1_icache.cache_linesize,
-                        simopts->get_xml_parser()->sys.L1_icache.cache_linesize,
-                        simopts->get_xml_parser()->sys.L1_icache.associativity,
-                        simopts->get_replacepolicy(),
+                        SimOpts->get_xml_parser()->sys.L1_icache.number_entries*
+                        SimOpts->get_xml_parser()->sys.L1_icache.cache_linesize,
+                        SimOpts->get_xml_parser()->sys.L1_icache.cache_linesize,
+                        SimOpts->get_xml_parser()->sys.L1_icache.associativity,
+                        SimOpts->get_replacepolicy(),
                         CACHE::CACHE_STORE::CACHE_STORE_ALLOCATE,
                         0);
 
     }
-    if (simopts->get_xml_parser()->sys.L1_dcache.cache_enable)
+    if (SimOpts->get_xml_parser()->sys.L1_dcache.cache_enable)
     {
         dl1 = new CACHE("Micro 4K TLB Cache", 1,
-                        simopts->get_xml_parser()->sys.L1_dcache.number_entries*
-                        simopts->get_xml_parser()->sys.L1_dcache.cache_linesize,
-                        simopts->get_xml_parser()->sys.L1_dcache.cache_linesize,
-                        simopts->get_xml_parser()->sys.L1_dcache.associativity,
-                        simopts->get_replacepolicy(),
+                        SimOpts->get_xml_parser()->sys.L1_dcache.number_entries*
+                        SimOpts->get_xml_parser()->sys.L1_dcache.cache_linesize,
+                        SimOpts->get_xml_parser()->sys.L1_dcache.cache_linesize,
+                        SimOpts->get_xml_parser()->sys.L1_dcache.associativity,
+                        SimOpts->get_replacepolicy(),
                         CACHE::CACHE_STORE::CACHE_STORE_ALLOCATE,
                         0);
 
     }
-    if (simopts->get_xml_parser()->sys.L2_ucache.cache_enable)
+    if (SimOpts->get_xml_parser()->sys.L2_ucache.cache_enable)
     {
         ul2 = new CACHE("Micro 4K TLB Cache", 1,
-                        simopts->get_xml_parser()->sys.L2_ucache.number_entries*
-                        simopts->get_xml_parser()->sys.L2_ucache.cache_linesize,
-                        simopts->get_xml_parser()->sys.L2_ucache.cache_linesize,
-                        simopts->get_xml_parser()->sys.L2_ucache.associativity,
-                        simopts->get_replacepolicy(),
+                        SimOpts->get_xml_parser()->sys.L2_ucache.number_entries*
+                        SimOpts->get_xml_parser()->sys.L2_ucache.cache_linesize,
+                        SimOpts->get_xml_parser()->sys.L2_ucache.cache_linesize,
+                        SimOpts->get_xml_parser()->sys.L2_ucache.associativity,
+                        SimOpts->get_replacepolicy(),
                         CACHE::CACHE_STORE::CACHE_STORE_ALLOCATE,
                         0);
         ul2->SetPrev(il1);
         ul2->SetPrev(dl1);
     }
-    if (simopts->get_xml_parser()->sys.L3_ucache.cache_enable)
+    if (SimOpts->get_xml_parser()->sys.L3_ucache.cache_enable)
     {
         ul3 = new CACHE("Micro 4K TLB Cache", 1,
-                        simopts->get_xml_parser()->sys.L3_ucache.number_entries*
-                        simopts->get_xml_parser()->sys.L3_ucache.cache_linesize,
-                        simopts->get_xml_parser()->sys.L3_ucache.cache_linesize,
-                        simopts->get_xml_parser()->sys.L3_ucache.associativity,
-                        simopts->get_replacepolicy(),
+                        SimOpts->get_xml_parser()->sys.L3_ucache.number_entries*
+                        SimOpts->get_xml_parser()->sys.L3_ucache.cache_linesize,
+                        SimOpts->get_xml_parser()->sys.L3_ucache.cache_linesize,
+                        SimOpts->get_xml_parser()->sys.L3_ucache.associativity,
+                        SimOpts->get_replacepolicy(),
                         CACHE::CACHE_STORE::CACHE_STORE_ALLOCATE,
                         0);
         ul3->SetPrev(il1);
     }
-    if (simopts->get_xml_parser()->sys.LM_itlb.cache_enable)
+    if (SimOpts->get_xml_parser()->sys.LM_itlb.cache_enable)
     {
         itlbm = new CACHE("Micro 4K TLB Cache", 1,
-                          simopts->get_xml_parser()->sys.LM_itlb.number_entries*
-                          simopts->get_xml_parser()->sys.LM_itlb.cache_linesize,
-                          simopts->get_xml_parser()->sys.LM_itlb.cache_linesize,
-                          simopts->get_xml_parser()->sys.LM_itlb.associativity,
-                          simopts->get_replacepolicy(),
+                          SimOpts->get_xml_parser()->sys.LM_itlb.number_entries*
+                          SimOpts->get_xml_parser()->sys.LM_itlb.cache_linesize,
+                          SimOpts->get_xml_parser()->sys.LM_itlb.cache_linesize,
+                          SimOpts->get_xml_parser()->sys.LM_itlb.associativity,
+                          SimOpts->get_replacepolicy(),
                           CACHE::CACHE_STORE::CACHE_STORE_ALLOCATE,
                           0);
     }
-    if (simopts->get_xml_parser()->sys.LM_itlb.cache_enable)
+    if (SimOpts->get_xml_parser()->sys.LM_itlb.cache_enable)
     {
         dtlbm = new CACHE("Micro 4K TLB Cache", 1,
-                          simopts->get_xml_parser()->sys.LM_dtlb.number_entries*
-                          simopts->get_xml_parser()->sys.LM_dtlb.cache_linesize,
-                          simopts->get_xml_parser()->sys.LM_dtlb.cache_linesize,
-                          simopts->get_xml_parser()->sys.LM_dtlb.associativity,
-                          simopts->get_replacepolicy(),
+                          SimOpts->get_xml_parser()->sys.LM_dtlb.number_entries*
+                          SimOpts->get_xml_parser()->sys.LM_dtlb.cache_linesize,
+                          SimOpts->get_xml_parser()->sys.LM_dtlb.cache_linesize,
+                          SimOpts->get_xml_parser()->sys.LM_dtlb.associativity,
+                          SimOpts->get_replacepolicy(),
                           CACHE::CACHE_STORE::CACHE_STORE_ALLOCATE,
                           0);
     }
-    if (simopts->get_xml_parser()->sys.L1_itlb.cache_enable)
+    if (SimOpts->get_xml_parser()->sys.L1_itlb.cache_enable)
     {
         itlb1 = new CACHE("Micro 4K TLB Cache", 1,
-                          simopts->get_xml_parser()->sys.L1_itlb.number_entries* 
-                          simopts->get_xml_parser()->sys.L1_itlb.cache_linesize,
-                          simopts->get_xml_parser()->sys.L1_itlb.cache_linesize,
-                          simopts->get_xml_parser()->sys.L1_itlb.associativity,
-                          simopts->get_replacepolicy(),
+                          SimOpts->get_xml_parser()->sys.L1_itlb.number_entries* 
+                          SimOpts->get_xml_parser()->sys.L1_itlb.cache_linesize,
+                          SimOpts->get_xml_parser()->sys.L1_itlb.cache_linesize,
+                          SimOpts->get_xml_parser()->sys.L1_itlb.associativity,
+                          SimOpts->get_replacepolicy(),
                           CACHE::CACHE_STORE::CACHE_STORE_ALLOCATE,
                           0);
         itlb1->SetPrev(itlbm);
     }
-    if (simopts->get_xml_parser()->sys.L1_dtlb.cache_enable)
+    if (SimOpts->get_xml_parser()->sys.L1_dtlb.cache_enable)
     {
         dtlb1 = new CACHE("Micro 4K TLB Cache", 1,
-                          simopts->get_xml_parser()->sys.L1_dtlb.number_entries*
-                          simopts->get_xml_parser()->sys.L1_dtlb.cache_linesize,
-                          simopts->get_xml_parser()->sys.L1_dtlb.cache_linesize,
-                          simopts->get_xml_parser()->sys.L1_dtlb.associativity,
-                          simopts->get_replacepolicy(),
+                          SimOpts->get_xml_parser()->sys.L1_dtlb.number_entries*
+                          SimOpts->get_xml_parser()->sys.L1_dtlb.cache_linesize,
+                          SimOpts->get_xml_parser()->sys.L1_dtlb.cache_linesize,
+                          SimOpts->get_xml_parser()->sys.L1_dtlb.associativity,
+                          SimOpts->get_replacepolicy(),
                           CACHE::CACHE_STORE::CACHE_STORE_ALLOCATE,
                           0);
 
         dtlb1->SetPrev(dtlbm);
     }
-    if (simopts->get_xml_parser()->sys.L2_utlb.cache_enable)
+    if (SimOpts->get_xml_parser()->sys.L2_utlb.cache_enable)
     {
         utlb2 = new CACHE("Micro 4K TLB Cache", 1,
-                          simopts->get_xml_parser()->sys.L2_utlb.number_entries*   
-                          simopts->get_xml_parser()->sys.L2_utlb.cache_linesize,
-                          simopts->get_xml_parser()->sys.L2_utlb.cache_linesize,
-                          simopts->get_xml_parser()->sys.L2_utlb.associativity,
-                          simopts->get_replacepolicy(),
+                          SimOpts->get_xml_parser()->sys.L2_utlb.number_entries*   
+                          SimOpts->get_xml_parser()->sys.L2_utlb.cache_linesize,
+                          SimOpts->get_xml_parser()->sys.L2_utlb.cache_linesize,
+                          SimOpts->get_xml_parser()->sys.L2_utlb.associativity,
+                          SimOpts->get_replacepolicy(),
                           CACHE::CACHE_STORE::CACHE_STORE_ALLOCATE,
                           0);
         utlb2->SetPrev(dtlb1);
         utlb2->SetPrev(itlb1);
     }
-    if (simopts->get_tlb_coherence()) tlbc = new COHERENCE();
-
     // done. 
     return;
 }
@@ -754,7 +740,7 @@ VOID cache_and_tlb_module_fini()
 
 #if 0
     PageRecord *page = NULL;
-    if ((simopts->get_detailpagestats()))
+    if ((SimOpts->get_detailpagestats()))
     {
       page = GetPageRecord(tag);
       page->AccessCount ++;

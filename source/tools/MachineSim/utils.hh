@@ -79,11 +79,11 @@ class SIMGLOBALS;
 
 /// @ global objects of the simulator.
 extern SIMLOWLEVEL  *simaops;
-extern SIMPARAMS  *simwait;
-extern SIMSTATS   *simstats;
-extern SIMOPTS    *simopts;
-extern SIMXLATOR  *simxlator;
-extern SIMGLOBALS *simglobals;
+extern SIMPARAMS  *SimWait;
+extern SIMSTATS   *SimStats;
+extern SIMOPTS    *SimOpts;
+extern SIMXLATOR  *SimXlator;
+extern SIMGLOBALS *SimTheOne;
 extern UINT32     *critsecLevel;
 
 
@@ -239,7 +239,7 @@ private:
                                  : "memory" );
         return value+val;
     }
-    inline int64_t p_atom_uint64_xadd(uint64_t *num, int val)
+    inline uint64_t p_atom_uint64_xadd(uint64_t *num, int val)
     {
         uint64_t value = val;
         __asm__ __volatile__ ("lock; xaddq %%rax, %2;"
@@ -282,27 +282,27 @@ public:
     {
         return p_atom_int32_xadd(m, inval);
     }
-    inline int atom_int64_inc(int64_t *num)
+    inline int64_t atom_int64_inc(int64_t *num)
     {
         return p_atom_int64_xadd(num, 1);
     }
-    inline int atom_int64_dec(int64_t *num)
+    inline int64_t atom_int64_dec(int64_t *num)
     {
         return p_atom_int64_xadd(num, -1);
     }
-    inline int atom_uint64_inc(uint64_t *num)
+    inline uint64_t atom_uint64_inc(uint64_t *num)
     {
         return p_atom_uint64_xadd((uint64_t*)num, 1);
     }
-    inline int atom_uint64_dec(uint64_t *num)
+    inline uint64_t atom_uint64_dec(uint64_t *num)
     {
         return p_atom_int64_xadd((int64_t*)num, -1);
     }
-    inline int atom_int64_add(int64_t *m, int64_t inval)
+    inline int64_t atom_int64_add(int64_t *m, int64_t inval)
     {
         return p_atom_int64_xadd(m, inval);
     }
-    inline int atom_int64_sub(int64_t *m, int64_t inval)
+    inline int64_t atom_int64_sub(int64_t *m, int64_t inval)
     {
         return p_atom_int64_xadd(m, inval);
     }
@@ -535,12 +535,8 @@ private:
     /// miscellaneous simulation options.
     BOOL SIM_TraceRecord;
     BOOL SIM_DetailPageStats;
-    BOOL SIM_EnableAddrShareDet;
-    BOOL SIM_EnablePTWalkTrace;
-    BOOL SIM_EnableDynAddrSpaceMap;
-    BOOL SIM_EnableStaticAddrSpaceMap;
-    BOOL SIM_EnableTLBCoherence;
     BOOL SIM_EnableInsCount;
+    BOOL SIM_EnableMemSimul;
     UINT32 SIM_WaitWorkerCount;
     UINT64 SIM_MaxSimInstCount;
 
@@ -552,13 +548,9 @@ private:
     void reset_all()
     {
         SIM_TraceRecord     = false;
-        SIM_EnableAddrShareDet = false;
         SIM_DetailPageStats = false;
-        SIM_EnablePTWalkTrace = false;
-        SIM_EnableDynAddrSpaceMap = false;
-        SIM_EnableStaticAddrSpaceMap = false;
-        SIM_EnableTLBCoherence = false;
         SIM_EnableInsCount = false;
+        SIM_EnableMemSimul = false;
         SIM_WaitWorkerCount = 0;
         SIM_MaxSimInstCount = ULLONG_MAX;
     }
@@ -566,7 +558,7 @@ private:
     SIMOPTS()
     {
         reset_all();
-        my_logger = new SIMLOG(SIMLOG::SUPERVERBOSE, "simopts.log", "xx", 1, 1);
+        my_logger = new SIMLOG(SIMLOG::SUPERVERBOSE, "SimOpts.log", "xx", 1, 1);
     }
     /// dont forget to declare these two. want to make sure they
     /// are unaccessable otherwise one may accidently get copies of
@@ -580,9 +572,8 @@ public:
     void print()  
     {
        std::string optstring;
-       optstring += "\nSIM_TraceRecord: "  + simxlator->stringify_int(SIM_TraceRecord);
-       optstring += "\nSIM_EnableAddrShareDet: " + simxlator->stringify_int(SIM_EnableAddrShareDet);
-       optstring += "\nSIM_MaxSimInstCount: " + simxlator->stringify_int(SIM_MaxSimInstCount);
+       optstring += "\nSIM_TraceRecord: "  + SimXlator->stringify_int(SIM_TraceRecord);
+       optstring += "\nSIM_MaxSimInstCount: " + SimXlator->stringify_int(SIM_MaxSimInstCount);
 
        my_logger->logme(SIMLOG::CRITICAL, "simulator options: \n %s", optstring.c_str());
     }
@@ -599,16 +590,10 @@ public:
     inline UINT32 get_workercount(void) const   { return SIM_WaitWorkerCount;   }
     inline VOID set_maxsiminst(UINT64 val)      { SIM_MaxSimInstCount = val;    }
     inline UINT64 get_maxsiminst(void) const    { return SIM_MaxSimInstCount;   }
-    inline BOOL get_ptwalk_trace(void) const    { return SIM_EnablePTWalkTrace; }
-    inline VOID set_ptwalk_trace(BOOL val)      { SIM_EnablePTWalkTrace = val;  }
-    inline BOOL get_tlb_coherence(void) const   { return SIM_EnableTLBCoherence;}
-    inline VOID set_tlb_coherence(BOOL val)     { SIM_EnableTLBCoherence = val; }
     inline BOOL get_ins_count(void) const       { return SIM_EnableInsCount;    }
     inline VOID set_ins_count(BOOL val)         { SIM_EnableInsCount = val;     }
-    inline BOOL get_dynamic_addrspace_map(void) const { return SIM_EnableDynAddrSpaceMap;     }
-    inline VOID set_dynamic_addrspace_map(BOOL val)   { SIM_EnableDynAddrSpaceMap = val;      }
-    inline BOOL get_static_addrspace_map(void) const  { return SIM_EnableStaticAddrSpaceMap;  }
-    inline VOID set_static_addrspace_map(BOOL val)    { SIM_EnableStaticAddrSpaceMap = val;   }
+    inline BOOL get_mem_simul(void) const       { return SIM_EnableMemSimul;    }
+    inline VOID set_mem_simul(BOOL val)         { SIM_EnableMemSimul = val;     }
 
     //// get_singleton - return the only simulation option in the program.
     static SIMOPTS* get_singleton()

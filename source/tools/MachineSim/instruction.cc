@@ -58,11 +58,11 @@ static FILE * tracefile = NULL;
 LOCALFUN VOID EstimateMIPS(UINT64 icount)
 {
     /* calculate elapsed time. */
-    clock_gettime(CLOCK_MONOTONIC, simglobals->get_time_fini());
-    double seconds = ((double)simglobals->get_time_fini()->tv_sec + 
-                     NANO*simglobals->get_time_fini()->tv_nsec) -
-                     ((double)simglobals->get_time_init()->tv_sec + 
-                     NANO*simglobals->get_time_fini()->tv_nsec);
+    clock_gettime(CLOCK_MONOTONIC, SimTheOne->get_time_fini());
+    double seconds = ((double)SimTheOne->get_time_fini()->tv_sec + 
+                     NANO*SimTheOne->get_time_fini()->tv_nsec) -
+                     ((double)SimTheOne->get_time_init()->tv_sec + 
+                     NANO*SimTheOne->get_time_fini()->tv_nsec);
 
     MACHINESIM_PRINT("Simulated %lluM instructions %lf MIPS\n", 
                     (unsigned long long) icount/MEGA, 
@@ -73,9 +73,9 @@ LOCALFUN VOID EstimateMIPS(UINT64 icount)
 /* MaxInstructionExecuted - check whether to exit due to max inst count */
 LOCALFUN VOID MaxInstructionExecuted(UINT64 icount)
 {
-    if (icount > simopts->get_maxsiminst())
+    if (icount > SimOpts->get_maxsiminst())
     {
-        MACHINESIM_PRINT("PIN_ExitApplication due to reaching maximum simulation threshold\n");
+        MACHINESIM_PRINT("PIN_ExitApplication due to reaching max sim count\n");
         PIN_ExitApplication(0);
     }
     return;
@@ -84,10 +84,10 @@ LOCALFUN VOID MaxInstructionExecuted(UINT64 icount)
 /* DoSimpleICount - This function is called before every instruction is executed */
 LOCALFUN VOID DoSimpleICount(ADDRINT ip, THREADID id) 
 { 
-    if (!simwait->dosim()) return;
+    if (!SimWait->dosim()) return;
 
     /* one more instructions executed. */
-    UINT64 icount = simglobals->add_global_icount();
+    UINT64 icount = SimTheOne->add_global_icount();
     if (icount % MEGA == 0) EstimateMIPS(icount);
 
     MaxInstructionExecuted(icount);
@@ -102,19 +102,19 @@ LOCALFUN VOID DoICountOnType(THREADID id, int type)
     switch(type)
     {
         case SIMGLOBALS::INSTYPE::INS_LOAD:
-             simglobals->IncFetch();
+             SimTheOne->IncFetch();
              break;
         case SIMGLOBALS::INSTYPE::INS_STORE:
-             simglobals->IncStore();
+             SimTheOne->IncStore();
              break;
         case SIMGLOBALS::INSTYPE::INS_CALL:
-             simglobals->IncCall();
+             SimTheOne->IncCall();
              break;
         case SIMGLOBALS::INSTYPE::INS_RET:
-             simglobals->IncReturn();
+             SimTheOne->IncReturn();
              break;
         case SIMGLOBALS::INSTYPE::INS_BRANCH:
-             simglobals->IncBranch();
+             SimTheOne->IncBranch();
              break;
         default:
              break;
@@ -381,14 +381,13 @@ VOID GenerateSimulationTrace(INS ins, VOID *v)
 /* InstructionInstrument - setup instruction level instructmentation */
 VOID InstructionInstrument(INS ins, VOID *v)
 {
-    SimpleInstructionCount(ins, v);
-    CacheSim(ins, v);
+    /* count instruction/simulate cache ? */
+    if (SimOpts->get_ins_count()) SimpleInstructionCount(ins, v);
+    if (SimOpts->get_mem_simul()) CacheSim(ins, v);
 
     /* trace base simulation enabled. */
-    if (simopts->get_tracerecord()) 
-    {
-        GenerateSimulationTrace(ins, v);
-    }
+    if (SimOpts->get_tracerecord()) GenerateSimulationTrace(ins, v);
+    /* done */
     return;
 }
 
@@ -402,7 +401,7 @@ LOCALFUN VOID instruction_module_print()
     std::ofstream out(name);
 
     out << "#==================\n" << "# General stats\n" << "#====================\n";
-    if (simglobals) out << simglobals->StatsInstructionCountLongAll();
+    if (SimTheOne) out << SimTheOne->StatsInstructionCountLongAll();
 
     MACHINESIM_FPRINT(stdout, "instruction stats dumped into %s.%d\n", "instruction.out", PIN_GetPid());
 }
