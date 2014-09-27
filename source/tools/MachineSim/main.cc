@@ -88,8 +88,8 @@ LOCALFUN VOID finalize_simobjs()
    delete SimTheOne  ;  SimTheOne = NULL;
 }
 
-/// initialize_SimOpts - initialize simulation options.
-LOCALFUN VOID initialize_SimOpts()
+/// InitSimOpts - initialize simulation options.
+LOCALFUN VOID InitSimOpts()
 {
     SimOpts->set_ins_count(KnobInstructionCountOnly.Value());
     SimOpts->set_mem_simul(KnobMemorySimulationOnly.Value());
@@ -105,41 +105,36 @@ LOCALFUN VOID initialize_SimTheOne()
     clock_gettime(CLOCK_MONOTONIC, SimTheOne->get_time_init());
 }
 
-/// finalize_SimOpts - finalize the simulation options.
-LOCALFUN VOID finalize_SimOpts()
-{
-    SimOpts->reset();
-}
 
-/// initialize_SimWait - initialize simulation wait reasons.
-LOCALFUN VOID initialize_SimWait()
+/// InitSimWait - initialize simulation wait reasons.
+LOCALFUN VOID InitSimWait()
 {
 ///    SimWait->setwait(SIMPARAMS::WAIT_WORKER_THREAD);
 }
 
-/// main_module_init - initialize the main module of the simulator.
-VOID main_module_init()
+/// MachineSimMainModuleFini - initialize the main module of the simulator.
+VOID MachineSimMainModuleInit()
 {
     initialize_simobjs();
-    initialize_SimOpts();
-    initialize_SimWait();
+    InitSimOpts();
+    InitSimWait();
     initialize_SimTheOne();
 }
 
-/// main_module_fini - finalize the main module of the simulator.
-VOID main_module_fini() 
+/// MachineSimMainModuleFini - finalize the main module of the simulator.
+VOID MachineSimMainModuleFini() 
 {
+    SimOpts->reset();
    finalize_simobjs();
-   finalize_SimOpts();
 }
 
 LOCALFUN VOID Fini(int code, VOID * v)
 {
    /* finalize modules. */
-   cache_and_tlb_module_fini();
-   instruction_module_fini();
-   basicblock_module_fini();
-   main_module_fini();
+   MachineSimCacheTLBModuleFini();
+   MachineSimInstructionModuleFini();
+   MachineSimBasicBlockModuleFini();
+   MachineSimMainModuleFini();
 }
 
 LOCALFUN INT32 Usage()
@@ -155,22 +150,21 @@ LOCALFUN INT32 Usage()
 /* ===================================================================== */
 GLOBALFUN int main(int argc, char *argv[])
 {
-    /// initialize symbols for image instrumentation.
     PIN_InitSymbols();
 
     if (PIN_Init(argc,argv)) return Usage();
 
-    /// initialize the main module.
-    main_module_init();
+    /* initialize the main module. */
+    MachineSimMainModuleInit();
 
-    /// initialize instruction module.
-    instruction_module_init();
+    /* initialize instruction module. */
+    MachineSimInstructionModuleInit();
 
-    /// initialize basicblock module.
-    basicblock_module_init();
+    /* initialize basicblock module. */
+    MachineSimBasicBlockModuleInit();
 
-    /// initialize the cache module simulation.
-    cache_and_tlb_module_init();
+    /* initialize the cache module simulation. */
+    MachineSimCacheTLBModuleInit();
 
     RTN_AddInstrumentFunction(RoutineInstrument, 0);
     INS_AddInstrumentFunction(InstructionInstrument, 0);
@@ -179,7 +173,6 @@ GLOBALFUN int main(int argc, char *argv[])
 
     PIN_AddFiniFunction(Fini, 0);
 
-    // Never returns
     PIN_StartProgram();
     return 0; // make compiler happy
 }

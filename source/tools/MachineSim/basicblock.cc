@@ -62,12 +62,12 @@ VOID TraceInstrument(TRACE trace, VOID *v)
     return;
 }
 
-void basicblock_module_init(void)
+void MachineSimBasicBlockModuleInit(void)
 {
     /* do nothing right now */
 }
 
-void basicblock_module_fini(void)
+void MachineSimBasicBlockModuleFini(void)
 {
     /* do nothing right now */
 }

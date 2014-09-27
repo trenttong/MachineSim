@@ -580,7 +580,7 @@ LOCALFUN VOID cache_and_tlb_module_print()
 /* ===================================================================== */
 
 /// init_sim_cache - initialize cache module.
-VOID cache_and_tlb_module_init()
+VOID MachineSimCacheTLBModuleInit()
 {
     if (SimOpts->get_xml_parser()->sys.L1_icache.cache_enable)
     {
@@ -695,7 +695,7 @@ VOID cache_and_tlb_module_init()
     return;
 }
 
-VOID cache_and_tlb_module_fini()
+VOID MachineSimCacheTLBModuleFini()
 {
     // print cache simulation results.
     cache_and_tlb_module_print();

@@ -49,14 +49,14 @@ string mydecstr(UINT64 v, UINT32 w);
 /* ===================================================================== */
 /* initialization and finalization prototypes. */
 /* ===================================================================== */
-VOID main_module_init();
-VOID main_module_fini();
-VOID instruction_module_init();
-VOID instruction_module_fini();
-VOID basicblock_module_init();
-VOID basicblock_module_fini();
-VOID cache_and_tlb_module_init();
-VOID cache_and_tlb_module_fini();
+VOID MachineSimMainModuleInit();
+VOID MachineSimMainModuleFini();
+VOID MachineSimInstructionModuleInit();
+VOID MachineSimInstructionModuleFini();
+VOID MachineSimBasicBlockModuleInit();
+VOID MachineSimBasicBlockModuleFini();
+VOID MachineSimCacheTLBModuleInit();
+VOID MachineSimCacheTLBModuleFini();
 
 /* ===================================================================== */
 /* instrumentation function declarations. */

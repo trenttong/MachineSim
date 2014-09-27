@@ -276,7 +276,7 @@ char myIsTextWideChar(const void *b, int len) { return FALSE; }
         }
         static inline FILE *xfopen(XMLCSTR filename,XMLCSTR mode) { return fopen(filename,mode); }
         static inline int xstrlen(XMLCSTR c)   { return (int)strlen(c); }
-        #ifdef __BORLANDC__
+        #ifdef MachineSimBORLANDCMachineSim
             static inline int xstrnicmp(XMLCSTR c1, XMLCSTR c2, int l) { return strnicmp(c1,c2,l);}
             static inline int xstricmp(XMLCSTR c1, XMLCSTR c2) { return stricmp(c1,c2); }
         #else

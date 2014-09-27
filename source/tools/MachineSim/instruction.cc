@@ -409,36 +409,14 @@ LOCALFUN VOID instruction_module_print()
 /* ===================================================================== */
 /* Module initialization and finialization functions */
 /* ===================================================================== */
-void instruction_module_init(void)
+void MachineSimInstructionModuleInit(void)
 {
     /* do nothing right now */
 }
 
-void instruction_module_fini(void)
+void MachineSimInstructionModuleFini(void)
 {
     instruction_module_print();
 }
-
-#if 0
-/* ===================================================================== */
-/* Parse static mapping every X billion instructions  this constructs    */
-/* and print the memory layout of the program                            */
-/* ===================================================================== */
-LOCALFUN VOID ParseStaticAddrSpaceMap()
-{
-    UINT64 start, end, perm;
-    UINT32 id = PIN_GetPid();
-    // Open and read the /proc/id/maps file
-    char name[128];
-    sprintf(name, "/proc/%d/maps", id); 
-    AddrSpaceMapParser *mp = new AddrSpaceMapParser(name);
-    AddrSpaceMap       *rn = new AddrSpaceMap;
-    while (mp->GetNextRegion(start, end, perm)) rn->RegisterRegion(start, end, perm);
-    rn->PrettyPrint();
-    delete mp;
-    delete rn;
-    return;
-}
-#endif
 
 

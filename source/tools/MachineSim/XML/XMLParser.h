@@ -114,8 +114,8 @@
  *
  ****************************************************************************/
 
-#ifndef __INCLUDE_XML_NODE__
-#define __INCLUDE_XML_NODE__
+#ifndef MachineSimINCLUDE_XML_NODEMachineSim
+#define MachineSimINCLUDE_XML_NODEMachineSim
 
 #include <stdlib.h>
 
@@ -128,7 +128,7 @@
 #define _XMLWIDECHAR
 #endif
 
-#if defined(WIN32) || defined(UNDER_CE) || defined(_WIN32) || defined(WIN64) || defined(__BORLANDC__)
+#if defined(WIN32) || defined(UNDER_CE) || defined(_WIN32) || defined(WIN64) || defined(MachineSimBORLANDCMachineSim)
 // comment the next line if you are under windows and the compiler is not Microsoft Visual Studio (6.0 or .NET) or Borland
 #define _XMLWINDOWS
 #endif
@@ -138,9 +138,9 @@
 #endif
 #ifdef _USE_XMLPARSER_DLL
 #ifdef _DLL_EXPORTS_
-#define XMLDLLENTRY __declspec(dllexport)
+#define XMLDLLENTRY MachineSimdeclspec(dllexport)
 #else
-#define XMLDLLENTRY __declspec(dllimport)
+#define XMLDLLENTRY MachineSimdeclspec(dllimport)
 #endif
 #else
 #define XMLDLLENTRY
